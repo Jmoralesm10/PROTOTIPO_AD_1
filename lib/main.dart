@@ -3,7 +3,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'login_page.dart'; // Importa el nuevo archivo
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
             ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 38, 3, 236)),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Prototipo app'),
+      home: LoginPage(), // Usa LoginPage como la página inicial
     );
   }
 }
@@ -320,28 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Anuncios',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // Implementar lógica para agregar anuncio
-                },
-                child: Text('Agregar Anuncio'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 2, 56, 174),
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildNewAnnouncementButton(),
         Expanded(
           child: ListView.builder(
             itemCount: anuncios.length,
@@ -354,79 +335,191 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildChurchCard() {
-    final LatLng churchLocation =
-        LatLng(14.531549169574864, -90.58678918875388);
-
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(
-            'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 200,
-                color: Colors.grey[300],
-                child: Center(
-                  child: Icon(Icons.error, color: Colors.red),
+  Widget _buildNewAnnouncementButton() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton.icon(
+        icon: Icon(Icons.add),
+        label: Text('Agregar anuncio'),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: SingleChildScrollView(
+                  child: _buildNewAnnouncementForm(),
                 ),
               );
             },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Nombre: Nueva vida',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Ubicación: Ciudad de Guatemala'),
-                Text('Pastor: Enrique Cardona Garcia'),
-                SizedBox(height: 10),
-                Container(
-                  height: 200,
-                  child: _buildGoogleMap(churchLocation),
-                ),
-                SizedBox(height: 10),
-                Text('SERVICIOS',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                // Tabla de servicios...
-              ],
-            ),
-          ),
-        ],
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color.fromARGB(255, 2, 56, 174),
+          foregroundColor: Colors.white,
+        ),
       ),
     );
   }
 
-  Widget _buildGoogleMap(LatLng location) {
-    return GoogleMap(
-      mapType: MapType.normal,
-      initialCameraPosition: CameraPosition(
-        target: location,
-        zoom: 15,
-      ),
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
-      markers: {
-        Marker(
-          markerId: MarkerId('church'),
-          position: location,
-          infoWindow: InfoWindow(title: 'Nueva vida'),
-        ),
+  Widget _buildNewAnnouncementForm() {
+    final TextEditingController _textController = TextEditingController();
+    File? _selectedImage;
+    File? _selectedPdf;
+
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Container(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Nueva publicación',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _textController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Escribe la descripción del anuncio...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.all(12),
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.image, color: Colors.blue),
+                    label: Text('Agregar imagen',
+                        style: TextStyle(color: Colors.blue)),
+                    onPressed: () async {
+                      final pickedFile = await ImagePicker()
+                          .pickImage(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        setState(() {
+                          _selectedImage = File(pickedFile.path);
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.picture_as_pdf, color: Colors.blue),
+                    label: Text('Agregar PDF',
+                        style: TextStyle(color: Colors.blue)),
+                    onPressed: () async {
+                      // Implementar lógica para seleccionar PDF
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                'Funcionalidad de agregar PDF no implementada')),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                ],
+              ),
+              if (_selectedImage != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Image.file(_selectedImage!, height: 100),
+                ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      child: Text('Publicar anuncio'),
+                      onPressed: () {
+                        // Implementar lógica para publicar el anuncio
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Anuncio publicado (simulado)')),
+                        );
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      child: Text('Cancelar'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 }
 
-class BuildMenu extends StatelessWidget {
+class BuildMenu extends StatefulWidget {
   final VoidCallback onBack;
-  final Completer<GoogleMapController> _controller = Completer();
 
   BuildMenu({required this.onBack});
+
+  @override
+  _BuildMenuState createState() => _BuildMenuState();
+}
+
+class _BuildMenuState extends State<BuildMenu> {
+  final Completer<GoogleMapController> _controller = Completer();
+  bool showAddForm = false;
+  File? _image;
+  final _formKey = GlobalKey<FormState>();
+
+  // Controladores para los campos del formulario
+  final _nombreIglesiaController = TextEditingController();
+  final _nombrePastorController = TextEditingController();
+  final _latitudController = TextEditingController();
+  final _longitudController = TextEditingController();
+  final _facebookController = TextEditingController();
+  final _instagramController = TextEditingController();
+  final _sitioWebController = TextEditingController();
+
+  // Mapa para almacenar los horarios de servicios
+  Map<String, List<TimeOfDay>> horarios = {
+    'Lunes': [],
+    'Martes': [],
+    'Miércoles': [],
+    'Jueves': [],
+    'Viernes': []
+  };
+
+  Future getImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -445,44 +538,264 @@ class BuildMenu extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: Icon(Icons.arrow_back),
-                        onPressed: onBack,
+                        onPressed: showAddForm
+                            ? () {
+                                setState(() {
+                                  showAddForm = false;
+                                });
+                              }
+                            : widget.onBack,
                       ),
-                      Text('Búsqueda de Iglesia',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text(
+                        showAddForm
+                            ? 'Agregar nueva iglesia'
+                            : 'Búsqueda de Iglesia',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 if (isDesktop)
-                  Text('Búsqueda de Iglesia',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Ingrese el nombre de la iglesia "Nueva Vida"',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.search),
+                  Text(
+                    showAddForm
+                        ? 'Agregar nueva iglesia'
+                        : 'Búsqueda de Iglesia',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  child: Text('Agregar +'),
-                  onPressed: () {
-                    // Implementar lógica para agregar iglesia
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
-                    foregroundColor: Colors.white,
+                if (!showAddForm) ...[
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Ingrese el nombre de la iglesia',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.search),
+                    ),
                   ),
-                ),
-                SizedBox(height: 20),
-                _buildChurchCard(),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          child: Text('Buscar', style: TextStyle(fontSize: 16)),
+                          onPressed: () {
+                            // Implementar lógica de búsqueda
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          child: Text('Agregar nueva',
+                              style: TextStyle(fontSize: 16)),
+                          onPressed: () {
+                            setState(() {
+                              showAddForm = true;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  _buildChurchCard(),
+                ] else ...[
+                  _buildAddChurchForm(isDesktop),
+                ],
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  Widget _buildAddChurchForm(bool isDesktop) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: GestureDetector(
+              onTap: getImage,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: _image != null ? FileImage(_image!) : null,
+                child:
+                    _image == null ? Icon(Icons.add_a_photo, size: 50) : null,
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          TextFormField(
+            controller: _nombreIglesiaController,
+            decoration: InputDecoration(labelText: 'Nombre de la Iglesia'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingrese el nombre de la iglesia';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: _nombrePastorController,
+            decoration: InputDecoration(labelText: 'Nombre del Pastor'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingrese el nombre del pastor';
+              }
+              return null;
+            },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _latitudController,
+                  decoration: InputDecoration(labelText: 'Latitud'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese la latitud';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _longitudController,
+                  decoration: InputDecoration(labelText: 'Longitud'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese la longitud';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Text('Horarios de Servicios',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ..._buildServiceSchedules(),
+          SizedBox(height: 20),
+          Text('Redes Sociales',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          TextFormField(
+            controller: _facebookController,
+            decoration: InputDecoration(labelText: 'Facebook'),
+          ),
+          TextFormField(
+            controller: _instagramController,
+            decoration: InputDecoration(labelText: 'Instagram'),
+          ),
+          TextFormField(
+            controller: _sitioWebController,
+            decoration: InputDecoration(labelText: 'Sitio Web'),
+          ),
+          SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  child: Text('Guardar', style: TextStyle(fontSize: 16)),
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  child: Text('Cancelar', style: TextStyle(fontSize: 16)),
+                  onPressed: () {
+                    setState(() {
+                      showAddForm = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildServiceSchedules() {
+    return horarios.entries.map((entry) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              ElevatedButton(
+                child: Text('Agregar Horario'),
+                onPressed: () => _selectTime(entry.key),
+              ),
+              ...entry.value
+                  .map((time) => Chip(
+                        label: Text('${time.format(context)}'),
+                        onDeleted: () => _removeTime(entry.key, time),
+                      ))
+                  .toList(),
+            ],
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  void _selectTime(String day) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && !horarios[day]!.contains(picked)) {
+      setState(() {
+        horarios[day]!.add(picked);
+      });
+    }
+  }
+
+  void _removeTime(String day, TimeOfDay time) {
+    setState(() {
+      horarios[day]!.remove(time);
+    });
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // Aquí iría la lógica para guardar los datos de la iglesia
+      print('Formulario válido, datos listos para ser guardados');
+      // Después de guardar, volvemos a la vista de búsqueda
+      setState(() {
+        showAddForm = false;
+      });
+    }
   }
 
   Widget _buildChurchCard() {
@@ -496,6 +809,8 @@ class BuildMenu extends StatelessWidget {
           Image.network(
             'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
             fit: BoxFit.cover,
+            height: 200,
+            width: double.infinity,
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 height: 200,
@@ -507,23 +822,43 @@ class BuildMenu extends StatelessWidget {
             },
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nombre: Nueva vida',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Ubicación: Ciudad de Guatemala'),
-                Text('Pastor: Enrique Cardona Garcia'),
+                Text('Nombre de la Iglesia: Nueva vida',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 SizedBox(height: 10),
+                Text('Pastor: Enrique Cardona Garcia',
+                    style: TextStyle(fontSize: 16)),
+                SizedBox(height: 10),
+                Text('Ubicación: Ciudad de Guatemala',
+                    style: TextStyle(fontSize: 16)),
+                SizedBox(height: 10),
+                Text('Coordenadas:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Latitud: ${churchLocation.latitude}'),
+                Text('Longitud: ${churchLocation.longitude}'),
+                SizedBox(height: 20),
+                Text('Mapa:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Container(
                   height: 200,
                   child: _buildGoogleMap(churchLocation),
                 ),
-                SizedBox(height: 10),
-                Text('SERVICIOS',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                // Tabla de servicios...
+                SizedBox(height: 20),
+                Text('Horarios de Servicios:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                _buildServiceScheduleTable(),
+                SizedBox(height: 20),
+                Text('Redes Sociales:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                _buildSocialMediaLinks(),
               ],
             ),
           ),
@@ -532,22 +867,77 @@ class BuildMenu extends StatelessWidget {
     );
   }
 
+  Widget _buildServiceScheduleTable() {
+    final Map<String, List<String>> horarios = {
+      'Lunes': ['19:00'],
+      'Martes': [],
+      'Miércoles': ['19:00'],
+      'Jueves': [],
+      'Viernes': ['19:00'],
+    };
+
+    return Table(
+      border: TableBorder.all(),
+      children: horarios.entries.map((entry) {
+        return TableRow(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(entry.key,
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(entry.value.isEmpty
+                  ? 'No hay servicios'
+                  : entry.value.join(', ')),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSocialMediaLinks() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          child: Text('Facebook: facebook.com/nuevavida',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
+        ),
+        InkWell(
+          child: Text('Instagram: @nuevavida',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
+        ),
+        InkWell(
+          child: Text('Sitio Web: www.nuevavida.org',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
+        ),
+      ],
+    );
+  }
+
   Widget _buildGoogleMap(LatLng location) {
     return GoogleMap(
-      mapType: MapType.normal,
       initialCameraPosition: CameraPosition(
         target: location,
         zoom: 15,
       ),
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
       markers: {
         Marker(
           markerId: MarkerId('church'),
           position: location,
-          infoWindow: InfoWindow(title: 'Nueva vida'),
         ),
+      },
+      onMapCreated: (GoogleMapController controller) {
+        _controller.complete(controller);
       },
     );
   }
@@ -563,7 +953,27 @@ class BuildPastorSearchMenu extends StatefulWidget {
 }
 
 class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
+  final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
+  final _formKey = GlobalKey<FormState>();
+
+  // Controladores para los campos del formulario
+  final _nombrePastorController = TextEditingController();
+  final _nombreIglesiaController = TextEditingController();
+  final _latitudController = TextEditingController();
+  final _longitudController = TextEditingController();
+  final _facebookController = TextEditingController();
+  final _instagramController = TextEditingController();
+  final _sitioWebController = TextEditingController();
+
+  // Mapa para almacenar los horarios de servicios
+  Map<String, List<TimeOfDay>> horarios = {
+    'Lunes': [],
+    'Martes': [],
+    'Miércoles': [],
+    'Jueves': [],
+    'Viernes': []
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -649,15 +1059,9 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                     ],
                   ),
                   SizedBox(height: 20),
-                  _buildPastorCard(isDesktop),
+                  _buildPastorCard(),
                 ] else ...[
-                  AddNewPastorForm(
-                    onCancel: () {
-                      setState(() {
-                        showAddForm = false;
-                      });
-                    },
-                  ),
+                  _buildAddPastorForm(isDesktop),
                 ],
               ],
             ),
@@ -667,475 +1071,314 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     );
   }
 
-  Widget _buildPastorCard(bool isDesktop) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment:
-              isDesktop ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: ClipOval(
-                child: FadeInImage.assetNetwork(
-                  placeholder: 'assets/placeholder.png',
-                  image:
-                      'https://cdn-icons-png.flaticon.com/512/3135/3135768.png',
-                  width: isDesktop ? 150 : 100,
-                  height: isDesktop ? 150 : 100,
-                  fit: BoxFit.cover,
-                  imageErrorBuilder: (context, error, stackTrace) {
-                    return CircleAvatar(
-                      radius: isDesktop ? 75 : 50,
-                      child: Icon(Icons.person,
-                          size: isDesktop ? 75 : 50, color: Colors.white),
-                      backgroundColor: Colors.grey,
-                    );
+  Widget _buildAddPastorForm(bool isDesktop) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _nombrePastorController,
+            decoration: InputDecoration(labelText: 'Nombre del Pastor'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingrese el nombre del pastor';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: _nombreIglesiaController,
+            decoration: InputDecoration(labelText: 'Nombre de la Iglesia'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingrese el nombre de la iglesia';
+              }
+              return null;
+            },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _latitudController,
+                  decoration: InputDecoration(labelText: 'Latitud'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese la latitud';
+                    }
+                    return null;
                   },
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            _buildInfoRow('Nombre:', 'Enrique Cardona Garcia', isDesktop),
-            _buildInfoRow('Edad:', '46', isDesktop),
-            _buildInfoRow('Fecha de nacimiento:', '05/02/1978', isDesktop),
-            _buildInfoRow('Nombre de la Iglesia:', 'Nueva vida', isDesktop),
-            _buildInfoRow('Ubicación de la Iglesia:', 'Guastatoya, El Progreso',
-                isDesktop),
-            _buildInfoRow('Teléfono:', '37564265', isDesktop),
-            _buildInfoRow('Correo:', 'enriquecardona@gmail.com', isDesktop),
-            _buildInfoRow('Cargo actual:', 'Pastor', isDesktop),
-            _buildInfoRow(
-                'Fecha de inicio del cargo:', '03/11/2020', isDesktop),
-            _buildInfoRow('Estudió en instituto bíblico:', 'Si', isDesktop),
-          ],
-        ),
+              SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _longitudController,
+                  decoration: InputDecoration(labelText: 'Longitud'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese la longitud';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Text('Horarios de Servicios',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ..._buildServiceSchedules(),
+          SizedBox(height: 20),
+          Text('Redes Sociales',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          TextFormField(
+            controller: _facebookController,
+            decoration: InputDecoration(labelText: 'Facebook'),
+          ),
+          TextFormField(
+            controller: _instagramController,
+            decoration: InputDecoration(labelText: 'Instagram'),
+          ),
+          TextFormField(
+            controller: _sitioWebController,
+            decoration: InputDecoration(labelText: 'Sitio Web'),
+          ),
+          SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  child: Text('Guardar', style: TextStyle(fontSize: 16)),
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  child: Text('Cancelar', style: TextStyle(fontSize: 16)),
+                  onPressed: () {
+                    setState(() {
+                      showAddForm = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value, bool isDesktop) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: isDesktop
-          ? Column(
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 2, 56, 174),
-                      fontSize: 20),
-                ),
-                SizedBox(height: 4),
-                Text(value, style: TextStyle(fontSize: 18)),
-                SizedBox(height: 10),
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 150,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 2, 56, 174)),
-                  ),
-                ),
-                Expanded(
-                  child: Text(value),
-                ),
-              ],
-            ),
-    );
-  }
-}
-
-class AddNewPastorForm extends StatefulWidget {
-  final VoidCallback onCancel;
-
-  AddNewPastorForm({required this.onCancel});
-
-  @override
-  _AddNewPastorFormState createState() => _AddNewPastorFormState();
-}
-
-class _AddNewPastorFormState extends State<AddNewPastorForm> {
-  final _formKey = GlobalKey<FormState>();
-  DateTime? fechaNacimiento;
-  DateTime? fechaInicioCargo;
-  String? iglesiaSelecionada;
-  String? cargoSeleccionado;
-  String? estudioBiblico;
-
-  final List<String> iglesias = [
-    'Iglesia A',
-    'Iglesia B',
-    'Iglesia C',
-    'Iglesia D'
-  ];
-  final List<String> cargos = [
-    'Pastor',
-    'Diácono',
-    'Anciano',
-    'Evangelista',
-    'Maestro'
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isDesktop = constraints.maxWidth >= 600;
-        double fontSize = isDesktop ? 18 : 16;
-        double spacing = isDesktop ? 20 : 20;
-
-        return Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  List<Widget> _buildServiceSchedules() {
+    return horarios.entries.map((entry) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          Row(
             children: [
-              if (isDesktop)
-                Column(
-                  children: [
-                    _buildNameFields(fontSize, spacing),
-                    SizedBox(height: spacing),
-                    _buildPersonalInfoDesktop(fontSize, spacing),
-                    SizedBox(height: spacing),
-                    _buildChurchInfoDesktop(fontSize, spacing),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    _buildPersonalInfo(fontSize, spacing, isDesktop),
-                    SizedBox(height: spacing),
-                    _buildChurchInfo(fontSize, spacing),
-                  ],
-                ),
-              SizedBox(height: spacing),
-              _buildButtons(fontSize),
+              ElevatedButton(
+                child: Text('Agregar Horario'),
+                onPressed: () => _selectTime(entry.key),
+              ),
+              ...entry.value
+                  .map((time) => Chip(
+                        label: Text('${time.format(context)}'),
+                        onDeleted: () => _removeTime(entry.key, time),
+                      ))
+                  .toList(),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNameFields(double fontSize, double spacing) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _buildInputField(
-              'Primer nombre',
-              (value) => value!.isEmpty ? 'Ingrese el primer nombre' : null,
-              fontSize),
-        ),
-        SizedBox(width: spacing),
-        Expanded(
-          child: _buildInputField('Segundo nombre', null, fontSize),
-        ),
-        SizedBox(width: spacing),
-        Expanded(
-          child: _buildInputField(
-              'Primer apellido',
-              (value) => value!.isEmpty ? 'Ingrese el primer apellido' : null,
-              fontSize),
-        ),
-        SizedBox(width: spacing),
-        Expanded(
-          child: _buildInputField('Segundo apellido', null, fontSize),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPersonalInfo(double fontSize, double spacing, bool isDesktop) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (!isDesktop) ...[
-          _buildInputField(
-              'Primer nombre',
-              (value) => value!.isEmpty ? 'Ingrese el primer nombre' : null,
-              fontSize),
-          SizedBox(height: spacing),
-          _buildInputField('Segundo nombre', null, fontSize),
-          SizedBox(height: spacing),
-          _buildInputField(
-              'Primer apellido',
-              (value) => value!.isEmpty ? 'Ingrese el primer apellido' : null,
-              fontSize),
-          SizedBox(height: spacing),
-          _buildInputField('Segundo apellido', null, fontSize),
-          SizedBox(height: spacing),
         ],
-        _buildInputField('DPI',
-            (value) => value!.isEmpty ? 'Ingrese el DPI' : null, fontSize,
-            isNumeric: true, maxLength: 13),
-        SizedBox(height: spacing),
-        _buildDatePicker('Fecha de nacimiento', fechaNacimiento,
-            (date) => setState(() => fechaNacimiento = date), fontSize),
-      ],
-    );
+      );
+    }).toList();
   }
 
-  Widget _buildPersonalInfoDesktop(double fontSize, double spacing) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _buildInputField('DPI',
-              (value) => value!.isEmpty ? 'Ingrese el DPI' : null, fontSize,
-              isNumeric: true, maxLength: 13),
-        ),
-        SizedBox(width: spacing),
-        Expanded(
-          child: _buildDatePicker('Fecha de nacimiento', fechaNacimiento,
-              (date) => setState(() => fechaNacimiento = date), fontSize),
-        ),
-      ],
+  void _selectTime(String day) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
     );
+    if (picked != null && !horarios[day]!.contains(picked)) {
+      setState(() {
+        horarios[day]!.add(picked);
+      });
+    }
   }
 
-  Widget _buildChurchInfo(double fontSize, double spacing) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDropdown('Nombre de la Iglesia', iglesias, iglesiaSelecionada,
-            (value) => setState(() => iglesiaSelecionada = value), fontSize),
-        SizedBox(height: spacing),
-        _buildInputField(
-            'Ubicación de la Iglesia',
-            (value) => value!.isEmpty ? 'Ingrese la ubicación' : null,
-            fontSize),
-        SizedBox(height: spacing),
-        _buildInputField('Teléfono',
-            (value) => value!.isEmpty ? 'Ingrese el teléfono' : null, fontSize,
-            isNumeric: true, maxLength: 20),
-        SizedBox(height: spacing),
-        _buildInputField('Correo', (value) {
-          if (value!.isEmpty) return 'Ingrese el correo';
-          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value))
-            return 'Ingrese un correo válido';
-          return null;
-        }, fontSize, isEmail: true, maxLength: 100),
-        SizedBox(height: spacing),
-        _buildDropdown('Cargo actual', cargos, cargoSeleccionado,
-            (value) => setState(() => cargoSeleccionado = value), fontSize),
-        SizedBox(height: spacing),
-        _buildDatePicker('Fecha de inicio del cargo', fechaInicioCargo,
-            (date) => setState(() => fechaInicioCargo = date), fontSize),
-        SizedBox(height: spacing),
-        _buildDropdown(
-            'Estudió en instituto bíblico',
-            ['SI', 'NO'],
-            estudioBiblico,
-            (value) => setState(() => estudioBiblico = value),
-            fontSize),
-      ],
-    );
+  void _removeTime(String day, TimeOfDay time) {
+    setState(() {
+      horarios[day]!.remove(time);
+    });
   }
 
-  Widget _buildChurchInfoDesktop(double fontSize, double spacing) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _buildDropdown(
-                  'Nombre de la Iglesia',
-                  iglesias,
-                  iglesiaSelecionada,
-                  (value) => setState(() => iglesiaSelecionada = value),
-                  fontSize),
-            ),
-            SizedBox(width: spacing),
-            Expanded(
-              child: _buildInputField(
-                  'Ubicación de la Iglesia',
-                  (value) => value!.isEmpty ? 'Ingrese la ubicación' : null,
-                  fontSize),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _buildInputField(
-                  'Teléfono',
-                  (value) => value!.isEmpty ? 'Ingrese el teléfono' : null,
-                  fontSize,
-                  isNumeric: true,
-                  maxLength: 20),
-            ),
-            SizedBox(width: spacing),
-            Expanded(
-              child: _buildInputField('Correo', (value) {
-                if (value!.isEmpty) return 'Ingrese el correo';
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                    .hasMatch(value)) return 'Ingrese un correo válido';
-                return null;
-              }, fontSize, isEmail: true, maxLength: 100),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _buildDropdown(
-                  'Cargo actual',
-                  cargos,
-                  cargoSeleccionado,
-                  (value) => setState(() => cargoSeleccionado = value),
-                  fontSize),
-            ),
-            SizedBox(width: spacing),
-            Expanded(
-              child: _buildDatePicker(
-                  'Fecha de inicio del cargo',
-                  fechaInicioCargo,
-                  (date) => setState(() => fechaInicioCargo = date),
-                  fontSize),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing),
-        _buildDropdown(
-            'Estudió en instituto bíblico',
-            ['SI', 'NO'],
-            estudioBiblico,
-            (value) => setState(() => estudioBiblico = value),
-            fontSize),
-      ],
-    );
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // Aquí iría la lógica para guardar los datos del pastor
+      print('Formulario válido, datos listos para ser guardados');
+      // Después de guardar, volvemos a la vista de búsqueda
+      setState(() {
+        showAddForm = false;
+      });
+    }
   }
 
-  Widget _buildButtons(double fontSize) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            child: Text('Guardar', style: TextStyle(fontSize: fontSize)),
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                // Implementar lógica para guardar el nuevo pastor
-              }
+  Widget _buildPastorCard() {
+    final LatLng pastorLocation =
+        LatLng(14.531549169574864, -90.58678918875388);
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Image.network(
+            'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
+            fit: BoxFit.cover,
+            height: 200,
+            width: double.infinity,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 200,
+                color: Colors.grey[300],
+                child: Center(
+                  child: Icon(Icons.error, color: Colors.red),
+                ),
+              );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color.fromARGB(255, 2, 56, 174),
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 15),
-            ),
           ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: ElevatedButton(
-            child: Text('Cancelar', style: TextStyle(fontSize: fontSize)),
-            onPressed: widget.onCancel,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 15),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputField(
-      String label, String? Function(String?)? validator, double fontSize,
-      {bool isNumeric = false, bool isEmail = false, int? maxLength}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        TextFormField(
-          decoration: InputDecoration(border: OutlineInputBorder()),
-          validator: validator,
-          keyboardType: isNumeric
-              ? TextInputType.number
-              : (isEmail ? TextInputType.emailAddress : TextInputType.text),
-          inputFormatters: [
-            if (isNumeric) FilteringTextInputFormatter.digitsOnly,
-            if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdown(String label, List<String> items, String? value,
-      void Function(String?) onChanged, double fontSize) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(border: OutlineInputBorder()),
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          validator: (value) =>
-              value == null ? 'Por favor seleccione una opción' : null,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDatePicker(String label, DateTime? date,
-      void Function(DateTime) onDateSelected, double fontSize) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        InkWell(
-          onTap: () async {
-            final DateTime? picked = await showDatePicker(
-              context: context,
-              initialDate: date ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-            );
-            if (picked != null && picked != date) {
-              onDateSelected(picked);
-            }
-          },
-          child: InputDecorator(
-            decoration: InputDecoration(border: OutlineInputBorder()),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(date == null
-                    ? 'Seleccionar fecha'
-                    : DateFormat('dd/MM/yyyy').format(date)),
-                Icon(Icons.calendar_today),
+                Text('Nombre del Pastor: Juan Pérez',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
+                Text('Iglesia: Iglesia Nueva Vida',
+                    style: TextStyle(fontSize: 16)),
+                SizedBox(height: 10),
+                Text('Ubicación: Ciudad de Guatemala',
+                    style: TextStyle(fontSize: 16)),
+                SizedBox(height: 10),
+                Text('Coordenadas:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Latitud: ${pastorLocation.latitude}'),
+                Text('Longitud: ${pastorLocation.longitude}'),
+                SizedBox(height: 20),
+                Text('Mapa:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  height: 200,
+                  child: _buildGoogleMap(pastorLocation),
+                ),
+                SizedBox(height: 20),
+                Text('Horarios de Servicios:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                _buildServiceScheduleTable(),
+                SizedBox(height: 20),
+                Text('Redes Sociales:',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                _buildSocialMediaLinks(),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceScheduleTable() {
+    final Map<String, List<String>> horarios = {
+      'Lunes': ['19:00'],
+      'Martes': [],
+      'Miércoles': ['19:00'],
+      'Jueves': [],
+      'Viernes': ['19:00'],
+    };
+
+    return Table(
+      border: TableBorder.all(),
+      children: horarios.entries.map((entry) {
+        return TableRow(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(entry.key,
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(entry.value.isEmpty
+                  ? 'No hay servicios'
+                  : entry.value.join(', ')),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSocialMediaLinks() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          child: Text('Facebook: facebook.com/nuevavida',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
+        ),
+        InkWell(
+          child: Text('Instagram: @nuevavida',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
+        ),
+        InkWell(
+          child: Text('Sitio Web: www.nuevavida.org',
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline)),
+          onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
         ),
       ],
+    );
+  }
+
+  Widget _buildGoogleMap(LatLng location) {
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: location,
+        zoom: 15,
+      ),
+      markers: {
+        Marker(
+          markerId: MarkerId('pastor'),
+          position: location,
+        ),
+      },
+      onMapCreated: (GoogleMapController controller) {
+        _controller.complete(controller);
+      },
     );
   }
 }
@@ -1164,7 +1407,7 @@ class AnuncioCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(8),
+      margin: EdgeInsets.all(16),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -1174,30 +1417,44 @@ class AnuncioCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundImage: NetworkImage(anuncio.imagenPerfil),
-                  radius: 30,
                 ),
                 SizedBox(width: 16),
                 Text(
                   anuncio.nombre,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 16),
             Text(anuncio.texto),
             SizedBox(height: 16),
-            ElevatedButton(
-              child: Text(anuncio.esImagen ? 'Ver imagen' : 'Ver PDF'),
-              onPressed: () async {
-                if (await canLaunch(anuncio.archivo)) {
-                  await launch(anuncio.archivo);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('No se pudo abrir el archivo')),
+            if (anuncio.esImagen)
+              Image.network(
+                anuncio.archivo,
+                fit: BoxFit.cover,
+                height: 200,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    color: Colors.grey[300],
+                    child: Center(
+                      child: Icon(Icons.error, color: Colors.red),
+                    ),
                   );
-                }
-              },
-            ),
+                },
+              )
+            else
+              InkWell(
+                child: Text(
+                  anuncio.archivo,
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                onTap: () => launchUrl(Uri.parse(anuncio.archivo)),
+              ),
           ],
         ),
       ),
