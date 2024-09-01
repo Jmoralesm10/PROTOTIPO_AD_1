@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'login_page.dart'; // Importa el nuevo archivo
@@ -20,10 +19,10 @@ class MyApp extends StatelessWidget {
       title: 'Asambleas de Dios',
       theme: ThemeData(
         colorScheme:
-            ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 38, 3, 236)),
+            ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 38, 3, 236)),
         useMaterial3: true,
       ),
-      home: LoginPage(), // Usa LoginPage como la página inicial
+      home: const LoginPage(), // Usa LoginPage como la página inicial
     );
   }
 }
@@ -57,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
               if (isDesktop)
                 Container(
                   width: 200,
-                  color: Color.fromARGB(255, 2, 56, 174),
+                  color: const Color.fromARGB(255, 2, 56, 174),
                   child: Column(
                     children: [
                       _buildDesktopMenuHeader(),
@@ -98,8 +97,8 @@ class _MyHomePageState extends State<MyHomePage> {
           drawer: isDesktop
               ? null
               : Drawer(
-                  child: _buildMobileMenu(context),
                   width: MediaQuery.of(context).size.width * 0.75,
+                  child: _buildMobileMenu(context),
                 ),
         );
       },
@@ -108,10 +107,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   PreferredSizeWidget _buildMobileAppBar() {
     return PreferredSize(
-      preferredSize: Size.fromHeight(110),
+      preferredSize: const Size.fromHeight(110),
       child: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(255, 2, 56, 174),
+        backgroundColor: const Color.fromARGB(255, 2, 56, 174),
         flexibleSpace: SafeArea(
           child: Center(
             child: Row(
@@ -119,8 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 IconButton(
                   iconSize: 70,
-                  padding: EdgeInsets.all(10.0),
-                  icon: Icon(Icons.menu, color: Colors.white),
+                  padding: const EdgeInsets.all(10.0),
+                  icon: const Icon(Icons.menu, color: Colors.white),
                   onPressed: () {
                     _scaffoldKey.currentState?.openDrawer();
                   },
@@ -147,8 +146,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildDesktopMenuHeader() {
     return Container(
       height: 100,
-      padding: EdgeInsets.all(16),
-      child: Row(
+      padding: const EdgeInsets.all(16),
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
@@ -167,12 +166,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildDesktopHeader() {
     return Container(
       height: 100,
-      color: Color.fromARGB(255, 2, 56, 174),
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      color: const Color.fromARGB(255, 2, 56, 174),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          const Text(
             'Asambleas de Dios',
             style: TextStyle(
               color: Colors.white,
@@ -195,8 +194,8 @@ class _MyHomePageState extends State<MyHomePage> {
       padding: EdgeInsets.zero,
       children: [
         ListTile(
-          leading: Icon(Icons.home, color: Colors.white),
-          title: Text('Inicio', style: TextStyle(color: Colors.white)),
+          leading: const Icon(Icons.home, color: Colors.white),
+          title: const Text('Inicio', style: TextStyle(color: Colors.white)),
           onTap: () {
             setState(() {
               _showSearchForm = false;
@@ -205,8 +204,8 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.search, color: Colors.white),
-          title: Text('Buscar Iglesia', style: TextStyle(color: Colors.white)),
+          leading: const Icon(Icons.search, color: Colors.white),
+          title: const Text('Buscar Iglesia', style: TextStyle(color: Colors.white)),
           onTap: () {
             setState(() {
               _showSearchForm = true;
@@ -215,9 +214,9 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.person_search, color: Colors.white),
+          leading: const Icon(Icons.person_search, color: Colors.white),
           title:
-              Text('Búsqueda de Pastor', style: TextStyle(color: Colors.white)),
+              const Text('Búsqueda de Pastor', style: TextStyle(color: Colors.white)),
           onTap: () {
             setState(() {
               _showPastorSearchForm = true;
@@ -234,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        DrawerHeader(
+        const DrawerHeader(
           decoration: BoxDecoration(
             color: Color.fromARGB(255, 2, 56, 174),
           ),
@@ -255,8 +254,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
         ListTile(
-          leading: Icon(Icons.home),
-          title: Text('Inicio'),
+          leading: const Icon(Icons.home),
+          title: const Text('Inicio'),
           onTap: () {
             setState(() {
               _showSearchForm = false;
@@ -266,8 +265,8 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.search),
-          title: Text('Buscar Iglesia'),
+          leading: const Icon(Icons.search),
+          title: const Text('Buscar Iglesia'),
           onTap: () {
             setState(() {
               _showSearchForm = true;
@@ -277,8 +276,8 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.person_search),
-          title: Text('Búsqueda de Pastor'),
+          leading: const Icon(Icons.person_search),
+          title: const Text('Búsqueda de Pastor'),
           onTap: () {
             setState(() {
               _showPastorSearchForm = true;
@@ -339,8 +338,8 @@ class _MyHomePageState extends State<MyHomePage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
-        icon: Icon(Icons.add),
-        label: Text('Agregar anuncio'),
+        icon: const Icon(Icons.add),
+        label: const Text('Agregar anuncio'),
         onPressed: () {
           showDialog(
             context: context,
@@ -354,7 +353,7 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color.fromARGB(255, 2, 56, 174),
+          backgroundColor: const Color.fromARGB(255, 2, 56, 174),
           foregroundColor: Colors.white,
         ),
       ),
@@ -362,89 +361,88 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildNewAnnouncementForm() {
-    final TextEditingController _textController = TextEditingController();
-    File? _selectedImage;
-    File? _selectedPdf;
+    final TextEditingController textController = TextEditingController();
+    File? selectedImage;
+    File? selectedPdf;
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
-        return Container(
+        return SizedBox(
           width: double.maxFinite,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Nueva publicación',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
-                controller: _textController,
+                controller: textController,
                 maxLines: 4,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Escribe la descripción del anuncio...',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.all(12),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    icon: Icon(Icons.image, color: Colors.blue),
-                    label: Text('Agregar imagen',
+                    icon: const Icon(Icons.image, color: Colors.blue),
+                    label: const Text('Agregar imagen',
                         style: TextStyle(color: Colors.blue)),
                     onPressed: () async {
                       final pickedFile = await ImagePicker()
                           .pickImage(source: ImageSource.gallery);
                       if (pickedFile != null) {
                         setState(() {
-                          _selectedImage = File(pickedFile.path);
+                          selectedImage = File(pickedFile.path);
                         });
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      side: BorderSide(color: Colors.blue),
+                      side: const BorderSide(color: Colors.blue),
                     ),
                   ),
                   ElevatedButton.icon(
-                    icon: Icon(Icons.picture_as_pdf, color: Colors.blue),
-                    label: Text('Agregar PDF',
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.blue),
+                    label: const Text('Agregar PDF',
                         style: TextStyle(color: Colors.blue)),
                     onPressed: () async {
                       // Implementar lógica para seleccionar PDF
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                             content: Text(
                                 'Funcionalidad de agregar PDF no implementada')),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      side: BorderSide(color: Colors.blue),
+                      side: const BorderSide(color: Colors.blue),
                     ),
                   ),
                 ],
               ),
-              if (_selectedImage != null)
+              if (selectedImage != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Image.file(_selectedImage!, height: 100),
+                  child: Image.file(selectedImage!, height: 100),
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      child: Text('Publicar anuncio'),
                       onPressed: () {
                         // Implementar lógica para publicar el anuncio
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
+                          const SnackBar(
                               content: Text('Anuncio publicado (simulado)')),
                         );
                         Navigator.of(context).pop();
@@ -453,12 +451,12 @@ class _MyHomePageState extends State<MyHomePage> {
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
                       ),
+                      child: const Text('Publicar anuncio'),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      child: Text('Cancelar'),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -466,6 +464,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         backgroundColor: Colors.grey,
                         foregroundColor: Colors.white,
                       ),
+                      child: const Text('Cancelar'),
                     ),
                   ),
                 ],
@@ -481,7 +480,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class BuildMenu extends StatefulWidget {
   final VoidCallback onBack;
 
-  BuildMenu({required this.onBack});
+  const BuildMenu({super.key, required this.onBack});
 
   @override
   _BuildMenuState createState() => _BuildMenuState();
@@ -537,7 +536,7 @@ class _BuildMenuState extends State<BuildMenu> {
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_back),
+                        icon: const Icon(Icons.arrow_back),
                         onPressed: showAddForm
                             ? () {
                                 setState(() {
@@ -550,7 +549,7 @@ class _BuildMenuState extends State<BuildMenu> {
                         showAddForm
                             ? 'Agregar nueva iglesia'
                             : 'Búsqueda de Iglesia',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -560,53 +559,53 @@ class _BuildMenuState extends State<BuildMenu> {
                     showAddForm
                         ? 'Agregar nueva iglesia'
                         : 'Búsqueda de Iglesia',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (!showAddForm) ...[
-                  TextField(
+                  const TextField(
                     decoration: InputDecoration(
                       hintText: 'Ingrese el nombre de la iglesia',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.search),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          child: Text('Buscar', style: TextStyle(fontSize: 16)),
                           onPressed: () {
                             // Implementar lógica de búsqueda
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
+                          child: const Text('Buscar', style: TextStyle(fontSize: 16)),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          child: Text('Agregar nueva',
-                              style: TextStyle(fontSize: 16)),
                           onPressed: () {
                             setState(() {
                               showAddForm = true;
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
+                          child: const Text('Agregar nueva',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   _buildChurchCard(),
                 ] else ...[
                   _buildAddChurchForm(isDesktop),
@@ -632,14 +631,14 @@ class _BuildMenuState extends State<BuildMenu> {
                 radius: 50,
                 backgroundImage: _image != null ? FileImage(_image!) : null,
                 child:
-                    _image == null ? Icon(Icons.add_a_photo, size: 50) : null,
+                    _image == null ? const Icon(Icons.add_a_photo, size: 50) : null,
               ),
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _nombreIglesiaController,
-            decoration: InputDecoration(labelText: 'Nombre de la Iglesia'),
+            decoration: const InputDecoration(labelText: 'Nombre de la Iglesia'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Por favor ingrese el nombre de la iglesia';
@@ -649,7 +648,7 @@ class _BuildMenuState extends State<BuildMenu> {
           ),
           TextFormField(
             controller: _nombrePastorController,
-            decoration: InputDecoration(labelText: 'Nombre del Pastor'),
+            decoration: const InputDecoration(labelText: 'Nombre del Pastor'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Por favor ingrese el nombre del pastor';
@@ -662,7 +661,7 @@ class _BuildMenuState extends State<BuildMenu> {
               Expanded(
                 child: TextFormField(
                   controller: _latitudController,
-                  decoration: InputDecoration(labelText: 'Latitud'),
+                  decoration: const InputDecoration(labelText: 'Latitud'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -672,11 +671,11 @@ class _BuildMenuState extends State<BuildMenu> {
                   },
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: TextFormField(
                   controller: _longitudController,
-                  decoration: InputDecoration(labelText: 'Longitud'),
+                  decoration: const InputDecoration(labelText: 'Longitud'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -688,43 +687,42 @@ class _BuildMenuState extends State<BuildMenu> {
               ),
             ],
           ),
-          SizedBox(height: 20),
-          Text('Horarios de Servicios',
+          const SizedBox(height: 20),
+          const Text('Horarios de Servicios',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ..._buildServiceSchedules(),
-          SizedBox(height: 20),
-          Text('Redes Sociales',
+          const SizedBox(height: 20),
+          const Text('Redes Sociales',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           TextFormField(
             controller: _facebookController,
-            decoration: InputDecoration(labelText: 'Facebook'),
+            decoration: const InputDecoration(labelText: 'Facebook'),
           ),
           TextFormField(
             controller: _instagramController,
-            decoration: InputDecoration(labelText: 'Instagram'),
+            decoration: const InputDecoration(labelText: 'Instagram'),
           ),
           TextFormField(
             controller: _sitioWebController,
-            decoration: InputDecoration(labelText: 'Sitio Web'),
+            decoration: const InputDecoration(labelText: 'Sitio Web'),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  child: Text('Guardar', style: TextStyle(fontSize: 16)),
                   onPressed: _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                    backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
+                  child: const Text('Guardar', style: TextStyle(fontSize: 16)),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton(
-                  child: Text('Cancelar', style: TextStyle(fontSize: 16)),
                   onPressed: () {
                     setState(() {
                       showAddForm = false;
@@ -733,8 +731,9 @@ class _BuildMenuState extends State<BuildMenu> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
+                  child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -749,19 +748,19 @@ class _BuildMenuState extends State<BuildMenu> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
           Row(
             children: [
               ElevatedButton(
-                child: Text('Agregar Horario'),
+                child: const Text('Agregar Horario'),
                 onPressed: () => _selectTime(entry.key),
               ),
               ...entry.value
                   .map((time) => Chip(
-                        label: Text('${time.format(context)}'),
+                        label: Text(time.format(context)),
                         onDeleted: () => _removeTime(entry.key, time),
                       ))
-                  .toList(),
+                  ,
             ],
           ),
         ],
@@ -799,7 +798,7 @@ class _BuildMenuState extends State<BuildMenu> {
   }
 
   Widget _buildChurchCard() {
-    final LatLng churchLocation =
+    const LatLng churchLocation =
         LatLng(14.531549169574864, -90.58678918875388);
 
     return Card(
@@ -815,7 +814,7 @@ class _BuildMenuState extends State<BuildMenu> {
               return Container(
                 height: 200,
                 color: Colors.grey[300],
-                child: Center(
+                child: const Center(
                   child: Icon(Icons.error, color: Colors.red),
                 ),
               );
@@ -826,36 +825,36 @@ class _BuildMenuState extends State<BuildMenu> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nombre de la Iglesia: Nueva vida',
+                const Text('Nombre de la Iglesia: Nueva vida',
                     style:
                         TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
-                Text('Pastor: Enrique Cardona Garcia',
+                const SizedBox(height: 10),
+                const Text('Pastor: Enrique Cardona Garcia',
                     style: TextStyle(fontSize: 16)),
-                SizedBox(height: 10),
-                Text('Ubicación: Ciudad de Guatemala',
+                const SizedBox(height: 10),
+                const Text('Ubicación: Ciudad de Guatemala',
                     style: TextStyle(fontSize: 16)),
-                SizedBox(height: 10),
-                Text('Coordenadas:',
+                const SizedBox(height: 10),
+                const Text('Coordenadas:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text('Latitud: ${churchLocation.latitude}'),
                 Text('Longitud: ${churchLocation.longitude}'),
-                SizedBox(height: 20),
-                Text('Mapa:',
+                const SizedBox(height: 20),
+                const Text('Mapa:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Container(
+                SizedBox(
                   height: 200,
                   child: _buildGoogleMap(churchLocation),
                 ),
-                SizedBox(height: 20),
-                Text('Horarios de Servicios:',
+                const SizedBox(height: 20),
+                const Text('Horarios de Servicios:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 _buildServiceScheduleTable(),
-                SizedBox(height: 20),
-                Text('Redes Sociales:',
+                const SizedBox(height: 20),
+                const Text('Redes Sociales:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 _buildSocialMediaLinks(),
@@ -884,7 +883,7 @@ class _BuildMenuState extends State<BuildMenu> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(entry.key,
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -903,19 +902,19 @@ class _BuildMenuState extends State<BuildMenu> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          child: Text('Facebook: facebook.com/nuevavida',
+          child: const Text('Facebook: facebook.com/nuevavida',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
         ),
         InkWell(
-          child: Text('Instagram: @nuevavida',
+          child: const Text('Instagram: @nuevavida',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
         ),
         InkWell(
-          child: Text('Sitio Web: www.nuevavida.org',
+          child: const Text('Sitio Web: www.nuevavida.org',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
@@ -932,7 +931,7 @@ class _BuildMenuState extends State<BuildMenu> {
       ),
       markers: {
         Marker(
-          markerId: MarkerId('church'),
+          markerId: const MarkerId('church'),
           position: location,
         ),
       },
@@ -946,7 +945,7 @@ class _BuildMenuState extends State<BuildMenu> {
 class BuildPastorSearchMenu extends StatefulWidget {
   final VoidCallback onBack;
 
-  BuildPastorSearchMenu({required this.onBack});
+  const BuildPastorSearchMenu({super.key, required this.onBack});
 
   @override
   _BuildPastorSearchMenuState createState() => _BuildPastorSearchMenuState();
@@ -991,7 +990,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_back),
+                        icon: const Icon(Icons.arrow_back),
                         onPressed: showAddForm
                             ? () {
                                 setState(() {
@@ -1004,7 +1003,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                         showAddForm
                             ? 'Agregar nuevo pastor'
                             : 'Búsqueda de Pastor',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -1012,53 +1011,53 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 if (isDesktop)
                   Text(
                     showAddForm ? 'Agregar nuevo pastor' : 'Búsqueda de Pastor',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (!showAddForm) ...[
-                  TextField(
+                  const TextField(
                     decoration: InputDecoration(
                       hintText: 'Ingrese el nombre del pastor',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.search),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          child: Text('Buscar', style: TextStyle(fontSize: 16)),
                           onPressed: () {
                             // Implementar lógica de búsqueda
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
+                          child: const Text('Buscar', style: TextStyle(fontSize: 16)),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          child: Text('Agregar nuevo',
-                              style: TextStyle(fontSize: 16)),
                           onPressed: () {
                             setState(() {
                               showAddForm = true;
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
+                          child: const Text('Agregar nuevo',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   _buildPastorCard(),
                 ] else ...[
                   _buildAddPastorForm(isDesktop),
@@ -1079,7 +1078,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
         children: [
           TextFormField(
             controller: _nombrePastorController,
-            decoration: InputDecoration(labelText: 'Nombre del Pastor'),
+            decoration: const InputDecoration(labelText: 'Nombre del Pastor'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Por favor ingrese el nombre del pastor';
@@ -1089,7 +1088,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
           ),
           TextFormField(
             controller: _nombreIglesiaController,
-            decoration: InputDecoration(labelText: 'Nombre de la Iglesia'),
+            decoration: const InputDecoration(labelText: 'Nombre de la Iglesia'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Por favor ingrese el nombre de la iglesia';
@@ -1102,7 +1101,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
               Expanded(
                 child: TextFormField(
                   controller: _latitudController,
-                  decoration: InputDecoration(labelText: 'Latitud'),
+                  decoration: const InputDecoration(labelText: 'Latitud'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -1112,11 +1111,11 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                   },
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: TextFormField(
                   controller: _longitudController,
-                  decoration: InputDecoration(labelText: 'Longitud'),
+                  decoration: const InputDecoration(labelText: 'Longitud'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -1128,43 +1127,42 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
               ),
             ],
           ),
-          SizedBox(height: 20),
-          Text('Horarios de Servicios',
+          const SizedBox(height: 20),
+          const Text('Horarios de Servicios',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ..._buildServiceSchedules(),
-          SizedBox(height: 20),
-          Text('Redes Sociales',
+          const SizedBox(height: 20),
+          const Text('Redes Sociales',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           TextFormField(
             controller: _facebookController,
-            decoration: InputDecoration(labelText: 'Facebook'),
+            decoration: const InputDecoration(labelText: 'Facebook'),
           ),
           TextFormField(
             controller: _instagramController,
-            decoration: InputDecoration(labelText: 'Instagram'),
+            decoration: const InputDecoration(labelText: 'Instagram'),
           ),
           TextFormField(
             controller: _sitioWebController,
-            decoration: InputDecoration(labelText: 'Sitio Web'),
+            decoration: const InputDecoration(labelText: 'Sitio Web'),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  child: Text('Guardar', style: TextStyle(fontSize: 16)),
                   onPressed: _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                    backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
+                  child: const Text('Guardar', style: TextStyle(fontSize: 16)),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton(
-                  child: Text('Cancelar', style: TextStyle(fontSize: 16)),
                   onPressed: () {
                     setState(() {
                       showAddForm = false;
@@ -1173,8 +1171,9 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
+                  child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -1189,19 +1188,19 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
           Row(
             children: [
               ElevatedButton(
-                child: Text('Agregar Horario'),
+                child: const Text('Agregar Horario'),
                 onPressed: () => _selectTime(entry.key),
               ),
               ...entry.value
                   .map((time) => Chip(
-                        label: Text('${time.format(context)}'),
+                        label: Text(time.format(context)),
                         onDeleted: () => _removeTime(entry.key, time),
                       ))
-                  .toList(),
+                  ,
             ],
           ),
         ],
@@ -1239,7 +1238,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   }
 
   Widget _buildPastorCard() {
-    final LatLng pastorLocation =
+    const LatLng pastorLocation =
         LatLng(14.531549169574864, -90.58678918875388);
 
     return Card(
@@ -1255,7 +1254,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
               return Container(
                 height: 200,
                 color: Colors.grey[300],
-                child: Center(
+                child: const Center(
                   child: Icon(Icons.error, color: Colors.red),
                 ),
               );
@@ -1266,36 +1265,36 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nombre del Pastor: Juan Pérez',
+                const Text('Nombre del Pastor: Juan Pérez',
                     style:
                         TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
-                Text('Iglesia: Iglesia Nueva Vida',
+                const SizedBox(height: 10),
+                const Text('Iglesia: Iglesia Nueva Vida',
                     style: TextStyle(fontSize: 16)),
-                SizedBox(height: 10),
-                Text('Ubicación: Ciudad de Guatemala',
+                const SizedBox(height: 10),
+                const Text('Ubicación: Ciudad de Guatemala',
                     style: TextStyle(fontSize: 16)),
-                SizedBox(height: 10),
-                Text('Coordenadas:',
+                const SizedBox(height: 10),
+                const Text('Coordenadas:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text('Latitud: ${pastorLocation.latitude}'),
                 Text('Longitud: ${pastorLocation.longitude}'),
-                SizedBox(height: 20),
-                Text('Mapa:',
+                const SizedBox(height: 20),
+                const Text('Mapa:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Container(
+                SizedBox(
                   height: 200,
                   child: _buildGoogleMap(pastorLocation),
                 ),
-                SizedBox(height: 20),
-                Text('Horarios de Servicios:',
+                const SizedBox(height: 20),
+                const Text('Horarios de Servicios:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 _buildServiceScheduleTable(),
-                SizedBox(height: 20),
-                Text('Redes Sociales:',
+                const SizedBox(height: 20),
+                const Text('Redes Sociales:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 _buildSocialMediaLinks(),
@@ -1324,7 +1323,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(entry.key,
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -1343,19 +1342,19 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          child: Text('Facebook: facebook.com/nuevavida',
+          child: const Text('Facebook: facebook.com/nuevavida',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
         ),
         InkWell(
-          child: Text('Instagram: @nuevavida',
+          child: const Text('Instagram: @nuevavida',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
         ),
         InkWell(
-          child: Text('Sitio Web: www.nuevavida.org',
+          child: const Text('Sitio Web: www.nuevavida.org',
               style: TextStyle(
                   color: Colors.blue, decoration: TextDecoration.underline)),
           onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
@@ -1372,7 +1371,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
       ),
       markers: {
         Marker(
-          markerId: MarkerId('pastor'),
+          markerId: const MarkerId('pastor'),
           position: location,
         ),
       },
@@ -1402,14 +1401,14 @@ class Anuncio {
 class AnuncioCard extends StatelessWidget {
   final Anuncio anuncio;
 
-  AnuncioCard({required this.anuncio});
+  const AnuncioCard({super.key, required this.anuncio});
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1418,16 +1417,16 @@ class AnuncioCard extends StatelessWidget {
                 CircleAvatar(
                   backgroundImage: NetworkImage(anuncio.imagenPerfil),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Text(
                   anuncio.nombre,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(anuncio.texto),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (anuncio.esImagen)
               Image.network(
                 anuncio.archivo,
@@ -1438,7 +1437,7 @@ class AnuncioCard extends StatelessWidget {
                   return Container(
                     height: 200,
                     color: Colors.grey[300],
-                    child: Center(
+                    child: const Center(
                       child: Icon(Icons.error, color: Colors.red),
                     ),
                   );
@@ -1448,7 +1447,7 @@ class AnuncioCard extends StatelessWidget {
               InkWell(
                 child: Text(
                   anuncio.archivo,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.blue,
                     decoration: TextDecoration.underline,
                   ),

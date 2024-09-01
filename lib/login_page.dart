@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'main.dart'; // Asegúrate de importar el archivo donde está definido MyHomePage
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -16,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -27,9 +29,9 @@ class _LoginPageState extends State<LoginPage> {
                   'assets/logo.png',
                   height: 150,
                 ),
-                SizedBox(height: 48),
+                const SizedBox(height: 48),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Correo electrónico',
                     border: OutlineInputBorder(),
                   ),
@@ -42,9 +44,9 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   onSaved: (value) => _email = value!,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Contraseña',
                     border: OutlineInputBorder(),
                   ),
@@ -57,15 +59,15 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   onSaved: (value) => _password = value!,
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 ElevatedButton(
-                  child: Text('Iniciar sesión'),
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 2, 56, 174),
+                    backgroundColor: const Color.fromARGB(255, 2, 56, 174),
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
+                  child: const Text('Iniciar sesión'),
                 ),
               ],
             ),
@@ -83,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
       // Si la autenticación es exitosa, navega a la página principal
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (context) => MyHomePage(title: 'Prototipo app')),
+            builder: (context) => const MyHomePage(title: 'Prototipo app')),
       );
     }
   }
