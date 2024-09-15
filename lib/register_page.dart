@@ -1,24 +1,34 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'main.dart'; // Asegúrate de importar el archivo donde está definido MyHomePage
-import 'package:http/http.dart'
-    as http; // Importar http para la llamada a la API
-import 'register_page.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
+
+  // Función para validar el correo electrónico
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor ingrese su correo electrónico';
+    }
+    // Expresión regular para validar el formato del correo electrónico
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(value)) {
+      return 'Por favor ingrese una dirección de correo electrónico válida';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,32 +94,38 @@ class _LoginPageState extends State<LoginPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Image.asset(
-            'assets/logo.png',
-            height: 150,
+          const Text(
+            'Regístrate',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 2, 56, 174),
+            ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
           TextFormField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Correo electrónico',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(color: Colors.black54),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
             keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Por favor ingrese su correo electrónico';
-              }
-              return null;
-            },
+            validator: _validateEmail, // Usamos la nueva función de validación
             onSaved: (value) => _email = value!,
           ),
           const SizedBox(height: 16),
           TextFormField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Contraseña',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(color: Colors.black54),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -124,33 +140,33 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _submit,
+            onPressed: _register,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 2, 56, 174),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Iniciar sesión'),
+            child: const Text('Registrarse', style: TextStyle(fontSize: 16)),
           ),
           const SizedBox(height: 16),
           TextButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RegisterPage()),
-              );
+              Navigator.pop(context);
             },
             style: TextButton.styleFrom(
-              foregroundColor: Color.fromARGB(255, 2, 56, 174),
+              foregroundColor: const Color.fromARGB(255, 2, 56, 174),
             ),
-            child: const Text('¿No tiene una cuenta? Regístrese aquí'),
+            child: const Text('¿Ya tiene una cuenta? Inicie sesión'),
           ),
         ],
       ),
     );
   }
 
-  void _submit() async {
+  void _register() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
@@ -159,7 +175,6 @@ class _LoginPageState extends State<LoginPage> {
         var connectivityResult = await (Connectivity().checkConnectivity());
         isConnected = connectivityResult != ConnectivityResult.none;
       } catch (e) {
-        // Si falla la verificación de conectividad, asumimos que hay conexión
         print('Error al verificar la conectividad: $e');
       }
 
@@ -173,31 +188,23 @@ class _LoginPageState extends State<LoginPage> {
         print('Intentando conectar a la API...');
         final response = await http
             .post(
-              Uri.parse('http://192.168.56.1:3000/api/asambleas/login'),
+              Uri.parse('http://192.168.56.1:3000/api/asambleas/registro'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'email': _email, 'password': _password}),
             )
-            .timeout(
-                const Duration(seconds: 10)); // Añade un timeout de 10 segundos
+            .timeout(const Duration(seconds: 10));
 
         print('Respuesta recibida. Código de estado: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
 
         final responseData = jsonDecode(response.body);
 
-        if (response.statusCode == 200) {
-          if (responseData['token'] != null) {
-            print('Token recibido. Iniciando sesión...');
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const MyHomePage(title: 'Prototipo app'),
-              ),
-            );
-          } else {
-            _showAlert('Error', 'No se recibió token de autenticación');
-          }
+        if (response.statusCode == 201) {
+          await _showAlert('Registro exitoso',
+              'Usuario registrado exitosamente. Por favor inicie sesión.');
+          Navigator.of(context).pop(); // Vuelve a la página de inicio de sesión
         } else {
-          _showAlert('Error de autenticación',
+          _showAlert('Error de registro',
               responseData['message'] ?? 'Ocurrió un error desconocido');
         }
       } on TimeoutException {
@@ -219,21 +226,30 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _showAlert(String title, String message) {
-    showDialog(
+  Future<void> _showAlert(String title, String message) async {
+    return showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Aceptar'),
+      barrierDismissible: false, // El usuario debe tocar el botón para cerrar
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(message),
+              ],
+            ),
           ),
-        ],
-      ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Aceptar'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

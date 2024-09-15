@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Asambleas de Dios',
       theme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 38, 3, 236)),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 38, 3, 236)),
         useMaterial3: true,
       ),
       home: const LoginPage(), // Usa LoginPage como la página inicial
@@ -205,7 +205,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         ListTile(
           leading: const Icon(Icons.search, color: Colors.white),
-          title: const Text('Buscar Iglesia', style: TextStyle(color: Colors.white)),
+          title: const Text('Buscar Iglesia',
+              style: TextStyle(color: Colors.white)),
           onTap: () {
             setState(() {
               _showSearchForm = true;
@@ -215,13 +216,22 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         ListTile(
           leading: const Icon(Icons.person_search, color: Colors.white),
-          title:
-              const Text('Búsqueda de Pastor', style: TextStyle(color: Colors.white)),
+          title: const Text('Búsqueda de Pastor',
+              style: TextStyle(color: Colors.white)),
           onTap: () {
             setState(() {
               _showPastorSearchForm = true;
               _showSearchForm = false;
             });
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.logout, color: Colors.white),
+          title: const Text('Cerrar sesión',
+              style: TextStyle(color: Colors.white)),
+          onTap: () {
+            // Llamar al método para cerrar sesión
+            _cerrarSesion();
           },
         ),
         // Otros elementos del menú para desktop...
@@ -286,8 +296,24 @@ class _MyHomePageState extends State<MyHomePage> {
             Navigator.pop(context);
           },
         ),
+        ListTile(
+          leading: const Icon(Icons.exit_to_app),
+          title: const Text('Cerrar sesión'),
+          onTap: () {
+            Navigator.pop(context);
+            _cerrarSesion();
+          },
+        ),
         // Otros elementos del menú para móvil...
       ],
+    );
+  }
+
+  void _cerrarSesion() {
+    // Aquí puedes agregar lógica adicional si es necesario, como limpiar datos de usuario, etc.
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -559,7 +585,8 @@ class _BuildMenuState extends State<BuildMenu> {
                     showAddForm
                         ? 'Agregar nueva iglesia'
                         : 'Búsqueda de Iglesia',
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                 const SizedBox(height: 20),
                 if (!showAddForm) ...[
@@ -579,11 +606,13 @@ class _BuildMenuState extends State<BuildMenu> {
                             // Implementar lógica de búsqueda
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor:
+                                const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          child: const Text('Buscar', style: TextStyle(fontSize: 16)),
+                          child: const Text('Buscar',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -595,7 +624,8 @@ class _BuildMenuState extends State<BuildMenu> {
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor:
+                                const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
@@ -630,15 +660,17 @@ class _BuildMenuState extends State<BuildMenu> {
               child: CircleAvatar(
                 radius: 50,
                 backgroundImage: _image != null ? FileImage(_image!) : null,
-                child:
-                    _image == null ? const Icon(Icons.add_a_photo, size: 50) : null,
+                child: _image == null
+                    ? const Icon(Icons.add_a_photo, size: 50)
+                    : null,
               ),
             ),
           ),
           const SizedBox(height: 20),
           TextFormField(
             controller: _nombreIglesiaController,
-            decoration: const InputDecoration(labelText: 'Nombre de la Iglesia'),
+            decoration:
+                const InputDecoration(labelText: 'Nombre de la Iglesia'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Por favor ingrese el nombre de la iglesia';
@@ -755,12 +787,10 @@ class _BuildMenuState extends State<BuildMenu> {
                 child: const Text('Agregar Horario'),
                 onPressed: () => _selectTime(entry.key),
               ),
-              ...entry.value
-                  .map((time) => Chip(
-                        label: Text(time.format(context)),
-                        onDeleted: () => _removeTime(entry.key, time),
-                      ))
-                  ,
+              ...entry.value.map((time) => Chip(
+                    label: Text(time.format(context)),
+                    onDeleted: () => _removeTime(entry.key, time),
+                  )),
             ],
           ),
         ],
@@ -957,13 +987,19 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para los campos del formulario
-  final _nombrePastorController = TextEditingController();
-  final _nombreIglesiaController = TextEditingController();
-  final _latitudController = TextEditingController();
-  final _longitudController = TextEditingController();
-  final _facebookController = TextEditingController();
-  final _instagramController = TextEditingController();
-  final _sitioWebController = TextEditingController();
+  final _primerNombreController = TextEditingController();
+  final _segundoNombreController = TextEditingController();
+  final _primerApellidoController = TextEditingController();
+  final _segundoApellidoController = TextEditingController();
+  final _dpiController = TextEditingController();
+  final _fechaNacimientoController = TextEditingController();
+  final _carnetPastorController = TextEditingController();
+  final _iglesiaController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _telefonoController = TextEditingController();
+  final _cargoController = TextEditingController();
+  final _fechaInicioCargo = TextEditingController();
+  bool? _estudioBiblico;
 
   // Mapa para almacenar los horarios de servicios
   Map<String, List<TimeOfDay>> horarios = {
@@ -1011,7 +1047,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 if (isDesktop)
                   Text(
                     showAddForm ? 'Agregar nuevo pastor' : 'Búsqueda de Pastor',
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                 const SizedBox(height: 20),
                 if (!showAddForm) ...[
@@ -1031,11 +1068,13 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                             // Implementar lógica de búsqueda
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor:
+                                const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          child: const Text('Buscar', style: TextStyle(fontSize: 16)),
+                          child: const Text('Buscar',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -1047,7 +1086,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+                            backgroundColor:
+                                const Color.fromARGB(255, 2, 56, 174),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
@@ -1073,112 +1113,212 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   Widget _buildAddPastorForm(bool isDesktop) {
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextFormField(
-            controller: _nombrePastorController,
-            decoration: const InputDecoration(labelText: 'Nombre del Pastor'),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Por favor ingrese el nombre del pastor';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _nombreIglesiaController,
-            decoration: const InputDecoration(labelText: 'Nombre de la Iglesia'),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Por favor ingrese el nombre de la iglesia';
-              }
-              return null;
-            },
-          ),
-          Row(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _latitudController,
-                  decoration: const InputDecoration(labelText: 'Latitud'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ingrese la latitud';
-                    }
-                    return null;
-                  },
+              if (isDesktop)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _primerNombreController,
+                        decoration:
+                            const InputDecoration(labelText: 'Primer Nombre'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Campo requerido' : null,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _segundoNombreController,
+                        decoration:
+                            const InputDecoration(labelText: 'Segundo Nombre'),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    TextFormField(
+                      controller: _primerNombreController,
+                      decoration:
+                          const InputDecoration(labelText: 'Primer Nombre'),
+                      validator: (value) =>
+                          value!.isEmpty ? 'Campo requerido' : null,
+                    ),
+                    TextFormField(
+                      controller: _segundoNombreController,
+                      decoration:
+                          const InputDecoration(labelText: 'Segundo Nombre'),
+                    ),
+                  ],
                 ),
+              if (isDesktop)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _primerApellidoController,
+                        decoration:
+                            const InputDecoration(labelText: 'Primer Apellido'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Campo requerido' : null,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _segundoApellidoController,
+                        decoration: const InputDecoration(
+                            labelText: 'Segundo Apellido'),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    TextFormField(
+                      controller: _primerApellidoController,
+                      decoration:
+                          const InputDecoration(labelText: 'Primer Apellido'),
+                      validator: (value) =>
+                          value!.isEmpty ? 'Campo requerido' : null,
+                    ),
+                    TextFormField(
+                      controller: _segundoApellidoController,
+                      decoration:
+                          const InputDecoration(labelText: 'Segundo Apellido'),
+                    ),
+                  ],
+                ),
+              TextFormField(
+                controller: _dpiController,
+                decoration: const InputDecoration(labelText: 'DPI'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextFormField(
-                  controller: _longitudController,
-                  decoration: const InputDecoration(labelText: 'Longitud'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ingrese la longitud';
-                    }
-                    return null;
-                  },
-                ),
+              TextFormField(
+                controller: _fechaNacimientoController,
+                decoration:
+                    const InputDecoration(labelText: 'Fecha de Nacimiento'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (pickedDate != null) {
+                    _fechaNacimientoController.text =
+                        pickedDate.toIso8601String().split('T')[0];
+                  }
+                },
+              ),
+              TextFormField(
+                controller: _carnetPastorController,
+                decoration: const InputDecoration(
+                    labelText: 'Número de Carnet de Pastor'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              ),
+              TextFormField(
+                controller: _iglesiaController,
+                decoration:
+                    const InputDecoration(labelText: 'Iglesia que Pastorea'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration:
+                    const InputDecoration(labelText: 'Correo Electrónico'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              ),
+              TextFormField(
+                controller: _telefonoController,
+                decoration:
+                    const InputDecoration(labelText: 'Número de Teléfono'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              ),
+              TextFormField(
+                controller: _cargoController,
+                decoration: const InputDecoration(labelText: 'Cargo Ocupado'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              ),
+              TextFormField(
+                controller: _fechaInicioCargo,
+                decoration: const InputDecoration(
+                    labelText: 'Fecha de Inicio del Cargo'),
+                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (pickedDate != null) {
+                    _fechaInicioCargo.text =
+                        pickedDate.toIso8601String().split('T')[0];
+                  }
+                },
+              ),
+              DropdownButtonFormField<bool>(
+                decoration: const InputDecoration(
+                    labelText: '¿Estudió en Instituto Bíblico?'),
+                items: [
+                  DropdownMenuItem(child: Text('Sí'), value: true),
+                  DropdownMenuItem(child: Text('No'), value: false),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _estudioBiblico = value;
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Seleccione una opción' : null,
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      child:
+                          const Text('Guardar', style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          showAddForm = false;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      child: const Text('Cancelar',
+                          style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Text('Horarios de Servicios',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ..._buildServiceSchedules(),
-          const SizedBox(height: 20),
-          const Text('Redes Sociales',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          TextFormField(
-            controller: _facebookController,
-            decoration: const InputDecoration(labelText: 'Facebook'),
-          ),
-          TextFormField(
-            controller: _instagramController,
-            decoration: const InputDecoration(labelText: 'Instagram'),
-          ),
-          TextFormField(
-            controller: _sitioWebController,
-            decoration: const InputDecoration(labelText: 'Sitio Web'),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 2, 56, 174),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: const Text('Guardar', style: TextStyle(fontSize: 16)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      showAddForm = false;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1195,12 +1335,10 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 child: const Text('Agregar Horario'),
                 onPressed: () => _selectTime(entry.key),
               ),
-              ...entry.value
-                  .map((time) => Chip(
-                        label: Text(time.format(context)),
-                        onDeleted: () => _removeTime(entry.key, time),
-                      ))
-                  ,
+              ...entry.value.map((time) => Chip(
+                    label: Text(time.format(context)),
+                    onDeleted: () => _removeTime(entry.key, time),
+                  )),
             ],
           ),
         ],
@@ -1242,66 +1380,46 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
         LatLng(14.531549169574864, -90.58678918875388);
 
     return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(
-            'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
-            fit: BoxFit.cover,
-            height: 200,
-            width: double.infinity,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 200,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Icon(Icons.error, color: Colors.red),
-                ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Nombre del Pastor: Juan Pérez',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                const Text('Iglesia: Iglesia Nueva Vida',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 10),
-                const Text('Ubicación: Ciudad de Guatemala',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 10),
-                const Text('Coordenadas:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('Latitud: ${pastorLocation.latitude}'),
-                Text('Longitud: ${pastorLocation.longitude}'),
-                const SizedBox(height: 20),
-                const Text('Mapa:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                SizedBox(
-                  height: 200,
-                  child: _buildGoogleMap(pastorLocation),
-                ),
-                const SizedBox(height: 20),
-                const Text('Horarios de Servicios:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                _buildServiceScheduleTable(),
-                const SizedBox(height: 20),
-                const Text('Redes Sociales:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                _buildSocialMediaLinks(),
-              ],
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(
+                    'https://cdn-icons-png.flaticon.com/512/3135/3135768.png'),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            const Text(
+              'Nombre: Enrique Cardona Garcia',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text('Edad: 46'),
+            const Text('Fecha de nacimiento: 05/02/1978'),
+            const Text('Nombre de la Iglesia: Nueva vida'),
+            const Text('Ubicación de la Iglesia: Guastatoya, El Progreso'),
+            const Text('Teléfono: 37564265'),
+            const Text('Correo: enriquecardona@gmail.com'),
+            const Text('Cargo actual: Pastor'),
+            const Text('Fecha de inicio del cargo: 03/11/2020'),
+            const Text('Estudió en instituto bíblico: Sí'),
+            const SizedBox(height: 16),
+            const Text('Ubicación:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(
+              height: 200,
+              child: _buildGoogleMap(pastorLocation),
+            ),
+          ],
+        ),
       ),
     );
   }
