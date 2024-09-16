@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'login_page.dart'; // Importa el nuevo archivo
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -526,6 +528,7 @@ class _BuildMenuState extends State<BuildMenu> {
   final _facebookController = TextEditingController();
   final _instagramController = TextEditingController();
   final _sitioWebController = TextEditingController();
+  final _direccionController = TextEditingController();
 
   // Mapa para almacenar los horarios de servicios
   Map<String, List<TimeOfDay>> horarios = {
@@ -536,14 +539,23 @@ class _BuildMenuState extends State<BuildMenu> {
     'Viernes': []
   };
 
-  Future getImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    setState(() {
+  String timeOfDayToString(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> getImage() async {
+    try {
+      final pickedFile =
+          await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        _image = File(pickedFile.path);
+        setState(() {
+          _image = File(pickedFile.path);
+        });
       }
-    });
+    } catch (e) {
+      print('Error al seleccionar la imagen: $e');
+      // Puedes mostrar un mensaje al usuario aquí si lo deseas
+    }
   }
 
   @override
@@ -688,6 +700,18 @@ class _BuildMenuState extends State<BuildMenu> {
               return null;
             },
           ),
+          // Nuevo campo de Dirección
+          TextFormField(
+            controller:
+                _direccionController, // Asegúrate de crear este controlador
+            decoration: const InputDecoration(labelText: 'Dirección'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingrese la dirección de la iglesia';
+              }
+              return null;
+            },
+          ),
           Row(
             children: [
               Expanded(
@@ -816,14 +840,61 @@ class _BuildMenuState extends State<BuildMenu> {
     });
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Aquí iría la lógica para guardar los datos de la iglesia
-      print('Formulario válido, datos listos para ser guardados');
-      // Después de guardar, volvemos a la vista de búsqueda
-      setState(() {
-        showAddForm = false;
+      // Convertir los horarios a un formato serializable
+      Map<String, List<String>> horariosSerializables = {};
+      horarios.forEach((dia, tiempos) {
+        horariosSerializables[dia] =
+            tiempos.map((t) => timeOfDayToString(t)).toList();
       });
+
+      Map<String, dynamic> iglesiaDatos = {
+        'nombre': _nombreIglesiaController.text,
+        'pastor': _nombrePastorController.text,
+        'direccion': _direccionController.text,
+        'latitud': double.parse(_latitudController.text),
+        'longitud': double.parse(_longitudController.text),
+        'facebook': _facebookController.text,
+        'instagram': _instagramController.text,
+        'sitioWeb': _sitioWebController.text,
+        'horarios': horariosSerializables,
+      };
+
+      // Convertir el mapa a JSON
+      String jsonIglesia = json.encode(iglesiaDatos);
+
+      // URL de tu API
+      String apiUrl = 'http://192.168.56.1:3000/api/asambleas/registro-iglesia';
+
+      try {
+        // Enviar la solicitud POST a la API
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonIglesia,
+        );
+
+        if (response.statusCode == 200) {
+          // La iglesia se guardó exitosamente
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Iglesia guardada exitosamente')),
+          );
+          setState(() {
+            showAddForm = false;
+          });
+        } else {
+          // Hubo un error al guardar la iglesia
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al guardar la iglesia')),
+          );
+        }
+      } catch (e) {
+        // Error de conexión o en la solicitud
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
