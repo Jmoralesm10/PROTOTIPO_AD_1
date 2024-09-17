@@ -141,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
               );
             },
             style: TextButton.styleFrom(
-              foregroundColor: Color.fromARGB(255, 2, 56, 174),
+              foregroundColor: const Color.fromARGB(255, 2, 56, 174),
             ),
             child: const Text('¿No tiene una cuenta? Regístrese aquí'),
           ),

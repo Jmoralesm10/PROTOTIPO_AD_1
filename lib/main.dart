@@ -7,6 +7,14 @@ import 'dart:io';
 import 'login_page.dart'; // Importa el nuevo archivo
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'platform_file.dart';
+import 'package:prototipo_asambleas_1/platform_file.dart';
+import 'package:http_parser/http_parser.dart';
+
+// Importación condicional
+import 'web_image_picker.dart' if (dart.library.io) 'mobile_image_picker.dart'
+    as image_picker;
 
 void main() {
   runApp(const MyApp());
@@ -519,7 +527,7 @@ class BuildMenu extends StatefulWidget {
 class _BuildMenuState extends State<BuildMenu> {
   //final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
-  File? _image;
+  PlatformFile? _image;
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para los campos del formulario
@@ -548,17 +556,11 @@ class _BuildMenuState extends State<BuildMenu> {
   }
 
   Future<void> getImage() async {
-    try {
-      final pickedFile =
-          await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() {
-          _image = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      print('Error al seleccionar la imagen: $e');
-      // Puedes mostrar un mensaje al usuario aquí si lo deseas
+    final PlatformFile? result = await image_picker.getWebImage();
+    if (result != null) {
+      setState(() {
+        _image = result;
+      });
     }
   }
 
@@ -674,10 +676,14 @@ class _BuildMenuState extends State<BuildMenu> {
             child: GestureDetector(
               onTap: getImage,
               child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _image != null ? FileImage(_image!) : null,
+                radius: 75,
+                backgroundImage: _image != null
+                    ? (kIsWeb
+                        ? NetworkImage(_image!.path)
+                        : FileImage(File(_image!.path)) as ImageProvider)
+                    : null,
                 child: _image == null
-                    ? const Icon(Icons.add_a_photo, size: 50)
+                    ? const Icon(Icons.add_a_photo, size: 75)
                     : null,
               ),
             ),
@@ -880,10 +886,13 @@ class _BuildMenuState extends State<BuildMenu> {
 
         // Agregar la imagen si existe
         if (_image != null) {
-          var stream = http.ByteStream(_image!.openRead());
-          var length = await _image!.length();
-          var multipartFile = http.MultipartFile('imagen', stream, length,
-              filename: _image!.path.split('/').last);
+          var bytes = await _image!.readAsBytes();
+          var multipartFile = http.MultipartFile.fromBytes(
+            'imagen',
+            bytes,
+            filename: 'imagen_iglesia.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          );
           request.files.add(multipartFile);
         }
 
@@ -909,10 +918,10 @@ class _BuildMenuState extends State<BuildMenu> {
       } on TimeoutException {
         _showAlert('Error de conexión',
             'La solicitud excedió el tiempo de espera. Por favor, inténtelo de nuevo.');
-      } on SocketException catch (e) {
+      } on SocketException {
         _showAlert('Error de conexión',
             'No se pudo establecer una conexión con el servidor. Verifique su conexión a internet y que el servidor esté en funcionamiento.');
-      } on FormatException catch (e) {
+      } on FormatException {
         _showAlert(
             'Error', 'Hubo un problema al procesar la respuesta del servidor.');
       } catch (e) {
@@ -978,8 +987,8 @@ class _BuildMenuState extends State<BuildMenu> {
                 const Text('Coordenadas:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('Latitud: 14.531549169574864'),
-                Text('Longitud: -90.58678918875388'),
+                const Text('Latitud: 14.531549169574864'),
+                const Text('Longitud: -90.58678918875388'),
                 const SizedBox(height: 20),
                 const Text('Mapa:',
                     style:
@@ -1237,7 +1246,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                             value!.isEmpty ? 'Campo requerido' : null,
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextFormField(
                         controller: _segundoNombreController,
@@ -1276,7 +1285,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                             value!.isEmpty ? 'Campo requerido' : null,
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextFormField(
                         controller: _segundoApellidoController,
@@ -1376,9 +1385,9 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
               DropdownButtonFormField<bool>(
                 decoration: const InputDecoration(
                     labelText: '¿Estudió en Instituto Bíblico?'),
-                items: [
-                  DropdownMenuItem(child: Text('Sí'), value: true),
-                  DropdownMenuItem(child: Text('No'), value: false),
+                items: const [
+                  DropdownMenuItem(value: true, child: Text('Sí')),
+                  DropdownMenuItem(value: false, child: Text('No')),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -1388,7 +1397,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 validator: (value) =>
                     value == null ? 'Seleccione una opción' : null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -1403,7 +1412,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                           const Text('Guardar', style: TextStyle(fontSize: 16)),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
@@ -1487,8 +1496,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1499,24 +1508,23 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                     'https://cdn-icons-png.flaticon.com/512/3135/3135768.png'),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Nombre: Enrique Cardona Garcia',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text('Edad: 46'),
-            const Text('Fecha de nacimiento: 05/02/1978'),
-            const Text('Nombre de la Iglesia: Nueva vida'),
-            const Text('Ubicación de la Iglesia: Guastatoya, El Progreso'),
-            const Text('Teléfono: 37564265'),
-            const Text('Correo: enriquecardona@gmail.com'),
-            const Text('Cargo actual: Pastor'),
-            const Text('Fecha de inicio del cargo: 03/11/2020'),
-            const Text('Estudió en instituto bíblico: Sí'),
-            const SizedBox(height: 16),
-            const Text('Ubicación:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('Edad: 46'),
+            Text('Fecha de nacimiento: 05/02/1978'),
+            Text('Nombre de la Iglesia: Nueva vida'),
+            Text('Ubicación de la Iglesia: Guastatoya, El Progreso'),
+            Text('Teléfono: 37564265'),
+            Text('Correo: enriquecardona@gmail.com'),
+            Text('Cargo actual: Pastor'),
+            Text('Fecha de inicio del cargo: 03/11/2020'),
+            Text('Estudió en instituto bíblico: Sí'),
+            SizedBox(height: 16),
+            Text('Ubicación:', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
