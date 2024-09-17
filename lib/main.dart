@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
             seedColor:
-                const Color.fromARGB(255, 255, 38, 3)), // Cambiado el color
+                const Color.fromARGB(255, 2, 56, 174)), // Cambiado el color
         useMaterial3: true,
       ),
       home:
@@ -861,40 +861,43 @@ class _BuildMenuState extends State<BuildMenu> {
             tiempos.map((t) => timeOfDayToString(t)).toList();
       });
 
-      Map<String, dynamic> iglesiaDatos = {
-        'nombre': _nombreIglesiaController.text,
-        'pastor': _nombrePastorController.text,
-        'direccion': _direccionController.text,
-        'latitud': double.parse(_latitudController.text),
-        'longitud': double.parse(_longitudController.text),
-        'facebook': _facebookController.text,
-        'instagram': _instagramController.text,
-        'sitioWeb': _sitioWebController.text,
-        'horarios': horariosSerializables,
-      };
-
-      // Convertir el mapa a JSON
-      String jsonIglesia = json.encode(iglesiaDatos);
-
       // URL de tu API
       String apiUrl = 'http://192.168.56.1:3000/api/asambleas/registro-iglesia';
 
       try {
-        // Enviar la solicitud POST a la API
-        final response = await http
-            .post(
-              Uri.parse(apiUrl),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonIglesia,
-            )
-            .timeout(const Duration(seconds: 10));
+        var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+        // Agregar los campos de texto
+        request.fields['nombre'] = _nombreIglesiaController.text;
+        request.fields['pastor'] = _nombrePastorController.text;
+        request.fields['direccion'] = _direccionController.text;
+        request.fields['latitud'] = _latitudController.text;
+        request.fields['longitud'] = _longitudController.text;
+        request.fields['facebook'] = _facebookController.text;
+        request.fields['instagram'] = _instagramController.text;
+        request.fields['sitioWeb'] = _sitioWebController.text;
+        request.fields['horarios'] = json.encode(horariosSerializables);
+
+        // Agregar la imagen si existe
+        if (_image != null) {
+          var stream = http.ByteStream(_image!.openRead());
+          var length = await _image!.length();
+          var multipartFile = http.MultipartFile('imagen', stream, length,
+              filename: _image!.path.split('/').last);
+          request.files.add(multipartFile);
+        }
+
+        // Enviar la solicitud
+        var streamedResponse =
+            await request.send().timeout(const Duration(seconds: 30));
+        var response = await http.Response.fromStream(streamedResponse);
 
         final responseData = jsonDecode(response.body);
 
         if (response.statusCode == 201) {
           // La iglesia se guardó exitosamente
           _showAlert(
-              'Guardada con éxito', 'La iglesia se registro correctamente');
+              'Guardada con éxito', 'La iglesia se registró correctamente');
           setState(() {
             showAddForm = false;
           });
@@ -951,7 +954,8 @@ class _BuildMenuState extends State<BuildMenu> {
                 height: 200,
                 color: Colors.grey[300],
                 child: const Center(
-                  child: Icon(Icons.error, color: Colors.red),
+                  child:
+                      Icon(Icons.error, color: Color.fromARGB(255, 2, 56, 174)),
                 ),
               );
             },
