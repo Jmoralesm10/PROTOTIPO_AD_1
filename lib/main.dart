@@ -530,13 +530,15 @@ class _BuildMenuState extends State<BuildMenu> {
   final _sitioWebController = TextEditingController();
   final _direccionController = TextEditingController();
 
-  // Mapa para almacenar los horarios de servicios
+  // Mapa actualizado para incluir todos los días de la semana
   Map<String, List<TimeOfDay>> horarios = {
     'Lunes': [],
     'Martes': [],
     'Miércoles': [],
     'Jueves': [],
-    'Viernes': []
+    'Viernes': [],
+    'Sábado': [],
+    'Domingo': []
   };
 
   String timeOfDayToString(TimeOfDay time) {
@@ -700,10 +702,8 @@ class _BuildMenuState extends State<BuildMenu> {
               return null;
             },
           ),
-          // Nuevo campo de Dirección
           TextFormField(
-            controller:
-                _direccionController, // Asegúrate de crear este controlador
+            controller: _direccionController,
             decoration: const InputDecoration(labelText: 'Dirección'),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -811,12 +811,22 @@ class _BuildMenuState extends State<BuildMenu> {
                 child: const Text('Agregar Horario'),
                 onPressed: () => _selectTime(entry.key),
               ),
-              ...entry.value.map((time) => Chip(
-                    label: Text(time.format(context)),
-                    onDeleted: () => _removeTime(entry.key, time),
-                  )),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: entry.value
+                      .map((time) => Chip(
+                            label: Text(timeOfDayToString(time)),
+                            onDeleted: () => _removeTime(entry.key, time),
+                          ))
+                      .toList(),
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 10),
         ],
       );
     }).toList();
