@@ -869,33 +869,59 @@ class _BuildMenuState extends State<BuildMenu> {
 
       try {
         // Enviar la solicitud POST a la API
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonIglesia,
-        );
+        final response = await http
+            .post(
+              Uri.parse(apiUrl),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonIglesia,
+            )
+            .timeout(const Duration(seconds: 10));
 
-        if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (response.statusCode == 201) {
           // La iglesia se guardó exitosamente
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Iglesia guardada exitosamente')),
-          );
+          _showAlert(
+              'Guardada con éxito', 'La iglesia se registro correctamente');
           setState(() {
             showAddForm = false;
           });
         } else {
-          // Hubo un error al guardar la iglesia
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al guardar la iglesia')),
-          );
+          // Mostrar el mensaje de error devuelto por la API
+          _showAlert('Error',
+              responseData['message'] ?? 'Ocurrió un error desconocido');
         }
+      } on TimeoutException {
+        _showAlert('Error de conexión',
+            'La solicitud excedió el tiempo de espera. Por favor, inténtelo de nuevo.');
+      } on SocketException catch (e) {
+        _showAlert('Error de conexión',
+            'No se pudo establecer una conexión con el servidor. Verifique su conexión a internet y que el servidor esté en funcionamiento.');
+      } on FormatException catch (e) {
+        _showAlert(
+            'Error', 'Hubo un problema al procesar la respuesta del servidor.');
       } catch (e) {
-        // Error de conexión o en la solicitud
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        _showAlert('Error', 'Ocurrió un error inesperado: $e');
       }
     }
+  }
+
+  void _showAlert(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildChurchCard() {
