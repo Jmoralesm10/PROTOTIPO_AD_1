@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+//import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,10 +21,12 @@ class MyApp extends StatelessWidget {
       title: 'Asambleas de Dios',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 38, 3, 236)),
+            seedColor:
+                const Color.fromARGB(255, 255, 38, 3)), // Cambiado el color
         useMaterial3: true,
       ),
-      home: const LoginPage(), // Usa LoginPage como la página inicial
+      home:
+          const LoginPage(), // Asegúrate de que LoginPage esté correctamente implementado
     );
   }
 }
@@ -39,7 +41,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final Completer<GoogleMapController> _controller = Completer();
+  //final Completer<GoogleMapController> _controller = Completer();
   bool _showSearchForm = false;
   bool _showPastorSearchForm = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -515,7 +517,7 @@ class BuildMenu extends StatefulWidget {
 }
 
 class _BuildMenuState extends State<BuildMenu> {
-  final Completer<GoogleMapController> _controller = Completer();
+  //final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
   File? _image;
   final _formKey = GlobalKey<FormState>();
@@ -935,9 +937,6 @@ class _BuildMenuState extends State<BuildMenu> {
   }
 
   Widget _buildChurchCard() {
-    const LatLng churchLocation =
-        LatLng(14.531549169574864, -90.58678918875388);
-
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -975,16 +974,12 @@ class _BuildMenuState extends State<BuildMenu> {
                 const Text('Coordenadas:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('Latitud: ${churchLocation.latitude}'),
-                Text('Longitud: ${churchLocation.longitude}'),
+                Text('Latitud: 14.531549169574864'),
+                Text('Longitud: -90.58678918875388'),
                 const SizedBox(height: 20),
                 const Text('Mapa:',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                SizedBox(
-                  height: 200,
-                  child: _buildGoogleMap(churchLocation),
-                ),
                 const SizedBox(height: 20),
                 const Text('Horarios de Servicios:',
                     style:
@@ -1060,7 +1055,7 @@ class _BuildMenuState extends State<BuildMenu> {
     );
   }
 
-  Widget _buildGoogleMap(LatLng location) {
+  /*Widget _buildGoogleMap(LatLng location) {
     return GoogleMap(
       initialCameraPosition: CameraPosition(
         target: location,
@@ -1076,7 +1071,7 @@ class _BuildMenuState extends State<BuildMenu> {
         _controller.complete(controller);
       },
     );
-  }
+  }*/
 }
 
 class BuildPastorSearchMenu extends StatefulWidget {
@@ -1089,7 +1084,7 @@ class BuildPastorSearchMenu extends StatefulWidget {
 }
 
 class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
-  final Completer<GoogleMapController> _controller = Completer();
+  //final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
   final _formKey = GlobalKey<FormState>();
 
@@ -1483,9 +1478,6 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   }
 
   Widget _buildPastorCard() {
-    const LatLng pastorLocation =
-        LatLng(14.531549169574864, -90.58678918875388);
-
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -1521,10 +1513,6 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
             const SizedBox(height: 16),
             const Text('Ubicación:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(
-              height: 200,
-              child: _buildGoogleMap(pastorLocation),
-            ),
           ],
         ),
       ),
@@ -1588,7 +1576,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     );
   }
 
-  Widget _buildGoogleMap(LatLng location) {
+  /*Widget _buildGoogleMap(LatLng location) {
     return GoogleMap(
       initialCameraPosition: CameraPosition(
         target: location,
@@ -1604,7 +1592,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
         _controller.complete(controller);
       },
     );
-  }
+  }*/
 }
 
 class Anuncio {
