@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,8 +9,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'platform_file.dart';
-import 'package:prototipo_asambleas_1/platform_file.dart';
 import 'package:http_parser/http_parser.dart';
+import 'map_widget.dart';
 
 // Importación condicional
 import 'web_image_picker.dart' if (dart.library.io) 'mobile_image_picker.dart'
@@ -401,7 +401,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildNewAnnouncementForm() {
     final TextEditingController textController = TextEditingController();
     File? selectedImage;
-    File? selectedPdf;
+    //File? selectedPdf;
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
@@ -525,12 +525,10 @@ class BuildMenu extends StatefulWidget {
 }
 
 class _BuildMenuState extends State<BuildMenu> {
-  //final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
   PlatformFile? _image;
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para los campos del formulario
   final _nombreIglesiaController = TextEditingController();
   final _nombrePastorController = TextEditingController();
   final _latitudController = TextEditingController();
@@ -539,6 +537,10 @@ class _BuildMenuState extends State<BuildMenu> {
   final _instagramController = TextEditingController();
   final _sitioWebController = TextEditingController();
   final _direccionController = TextEditingController();
+
+  final TextEditingController _searchController = TextEditingController();
+  List<Iglesia> _iglesias = [];
+  bool _isLoading = false;
 
   // Mapa actualizado para incluir todos los días de la semana
   Map<String, List<TimeOfDay>> horarios = {
@@ -608,8 +610,9 @@ class _BuildMenuState extends State<BuildMenu> {
                   ),
                 const SizedBox(height: 20),
                 if (!showAddForm) ...[
-                  const TextField(
-                    decoration: InputDecoration(
+                  TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
                       hintText: 'Ingrese el nombre de la iglesia',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.search),
@@ -620,9 +623,7 @@ class _BuildMenuState extends State<BuildMenu> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Implementar lógica de búsqueda
-                          },
+                          onPressed: _buscarIglesias,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromARGB(255, 2, 56, 174),
@@ -654,7 +655,10 @@ class _BuildMenuState extends State<BuildMenu> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildChurchCard(),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    _buildIglesiasList(),
                 ] else ...[
                   _buildAddChurchForm(isDesktop),
                 ],
@@ -868,7 +872,8 @@ class _BuildMenuState extends State<BuildMenu> {
       });
 
       // URL de tu API
-      String apiUrl = 'http://192.168.56.1:3000/api/asambleas/registro-iglesia';
+      String apiUrl =
+          'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro-iglesia';
 
       try {
         var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -948,143 +953,321 @@ class _BuildMenuState extends State<BuildMenu> {
     );
   }
 
-  Widget _buildChurchCard() {
+  Widget _buildIglesiasList() {
+    if (_iglesias.isEmpty) {
+      return const Center(child: Text('No se encontraron iglesias'));
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _iglesias.length,
+      itemBuilder: (context, index) {
+        return _buildIglesiaCard(_iglesias[index]);
+      },
+    );
+  }
+
+  Widget _buildIglesiaCard(Iglesia iglesia) {
     return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(
-            'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
-            fit: BoxFit.cover,
-            height: 200,
-            width: double.infinity,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 200,
-                color: Colors.grey[300],
-                child: const Center(
-                  child:
-                      Icon(Icons.error, color: Color.fromARGB(255, 2, 56, 174)),
-                ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Nombre de la Iglesia: Nueva vida',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                const Text('Pastor: Enrique Cardona Garcia',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 10),
-                const Text('Ubicación: Ciudad de Guatemala',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 10),
-                const Text('Coordenadas:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const Text('Latitud: 14.531549169574864'),
-                const Text('Longitud: -90.58678918875388'),
-                const SizedBox(height: 20),
-                const Text('Mapa:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                const Text('Horarios de Servicios:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                _buildServiceScheduleTable(),
-                const SizedBox(height: 20),
-                const Text('Redes Sociales:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                _buildSocialMediaLinks(),
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage: iglesia.fotoPerfil != null
+                      ? NetworkImage(
+                          'http://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}')
+                      : null,
+                  child: iglesia.fotoPerfil == null
+                      ? const Icon(Icons.church)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        iglesia.nombre,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text('Pastor: ${iglesia.pastor}'),
+                      const SizedBox(height: 8),
+                      Text('Dirección: ${iglesia.direccion}'),
+                      Text(
+                          'Coordenadas: ${iglesia.latitud}, ${iglesia.longitud}'),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            const Text('Horarios de servicios:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildHorariosTable(iglesia.horariosServicios),
+            const SizedBox(height: 16),
+            const Text('Redes sociales:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSocialMediaLinks(iglesia.redesSociales),
+            const SizedBox(height: 16),
+            const Text('Ubicación:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(
+              height: 300,
+              child: MapWidget(
+                lat: iglesia.latitud,
+                lng: iglesia.longitud,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildServiceScheduleTable() {
-    final Map<String, List<String>> horarios = {
-      'Lunes': ['19:00'],
-      'Martes': [],
-      'Miércoles': ['19:00'],
-      'Jueves': [],
-      'Viernes': ['19:00'],
-    };
-
+  Widget _buildHorariosTable(Map<String, List<String>> horarios) {
     return Table(
-      border: TableBorder.all(),
-      children: horarios.entries.map((entry) {
-        return TableRow(
+      border: TableBorder.all(color: Colors.grey),
+      children: [
+        const TableRow(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(entry.key,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child:
+                    Text('Día', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(entry.value.isEmpty
-                  ? 'No hay servicios'
-                  : entry.value.join(', ')),
+            TableCell(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Hora(s)',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSocialMediaLinks() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          child: const Text('Facebook: facebook.com/nuevavida',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
         ),
-        InkWell(
-          child: const Text('Instagram: @nuevavida',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
-        ),
-        InkWell(
-          child: const Text('Sitio Web: www.nuevavida.org',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
-        ),
+        ...horarios.entries
+            .map((entry) => TableRow(
+                  children: [
+                    TableCell(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(entry.key),
+                      ),
+                    ),
+                    TableCell(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                            entry.value.map((hora) => '$hora:00').join(', ')),
+                      ),
+                    ),
+                  ],
+                ))
+            .toList(),
       ],
     );
   }
 
-  /*Widget _buildGoogleMap(LatLng location) {
-    return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: location,
-        zoom: 15,
-      ),
-      markers: {
-        Marker(
-          markerId: const MarkerId('church'),
-          position: location,
-        ),
-      },
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
+  Widget _buildSocialMediaLinks(Map<String, String> redes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (redes.containsKey('Facebook'))
+          Builder(
+            builder: (context) {
+              final originalUrl = redes['Facebook']!;
+              final processedUrl = _processSocialUrl(originalUrl);
+              return _buildSocialMediaButton(
+                icon: Icons.facebook,
+                color: Colors.blue,
+                text: 'Facebook',
+                url: processedUrl,
+                fallbackUrl: processedUrl,
+              );
+            },
+          ),
+        if (redes.containsKey('Instagram'))
+          Builder(
+            builder: (context) {
+              final originalUrl = redes['Instagram']!;
+              final processedUrl = _processSocialUrl(originalUrl);
+              return _buildSocialMediaButton(
+                icon: Icons.camera_alt,
+                color: Colors.purple,
+                text: 'Instagram',
+                url: processedUrl,
+                fallbackUrl: processedUrl,
+              );
+            },
+          ),
+        if (redes.containsKey('Sitio Web'))
+          Builder(
+            builder: (context) {
+              final originalUrl = redes['Sitio Web']!;
+              final processedUrl = _processSocialUrl(originalUrl);
+              return _buildSocialMediaButton(
+                icon: Icons.language,
+                color: Colors.green,
+                text: 'Sitio Web',
+                url: processedUrl,
+                fallbackUrl: processedUrl,
+              );
+            },
+          ),
+      ],
     );
-  }*/
+  }
+
+  String _processSocialUrl(String url) {
+    // Eliminar comillas dobles extras al principio y al final
+    url = url.replaceAll(RegExp(r'^"|"$'), '');
+
+    // Eliminar el prefijo '@' si existe
+    if (url.startsWith('@')) {
+      url = url.substring(1);
+    }
+
+    // Verificar si la URL ya es válida
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Si no es una URL válida, intentar corregirla
+    return 'https://$url';
+  }
+
+  Widget _buildSocialMediaButton({
+    required IconData icon,
+    required Color color,
+    required String text,
+    required String url,
+    required String fallbackUrl,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: ElevatedButton.icon(
+        icon: Icon(icon, color: color),
+        label: Text(text),
+        onPressed: () => _launchURL(url, fallbackUrl: fallbackUrl),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.black,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchURL(String url, {required String fallbackUrl}) async {
+    try {
+      if (url.isEmpty) {
+        throw 'URL vacía';
+      }
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        final bool launched =
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          throw 'No se pudo lanzar $url';
+        }
+      } else {
+        throw 'No se puede lanzar $url';
+      }
+    } catch (e) {
+      print('Error al abrir la URL: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo abrir el enlace: $url\nError: $e')),
+      );
+    }
+  }
+
+  void _buscarIglesias() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> iglesiasData = json.decode(response.body);
+        setState(() {
+          _iglesias =
+              iglesiasData.map((item) => Iglesia.fromJson(item)).toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load iglesias');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar iglesias: $e')),
+      );
+    }
+  }
+}
+
+class Iglesia {
+  final int id;
+  final String nombre;
+  final String pastor;
+  final String direccion;
+  final double latitud;
+  final double longitud;
+  final String? fotoPerfil;
+  final Map<String, String> redesSociales;
+  final Map<String, List<String>> horariosServicios;
+
+  Iglesia({
+    required this.id,
+    required this.nombre,
+    required this.pastor,
+    required this.direccion,
+    required this.latitud,
+    required this.longitud,
+    this.fotoPerfil,
+    required this.redesSociales,
+    required this.horariosServicios,
+  });
+
+  LatLng get coordenadas => LatLng(latitud, longitud);
+
+  factory Iglesia.fromJson(Map<String, dynamic> json) {
+    return Iglesia(
+      id: json['id_iglesia'],
+      nombre: json['nombre'],
+      pastor: json['pastor'],
+      direccion: json['direccion'],
+      latitud: json['latitud'],
+      longitud: json['longitud'],
+      fotoPerfil: json['foto_perfil'],
+      redesSociales: Map<String, String>.from(
+        json['redes_sociales']
+            .map((key, value) => MapEntry(key, value.toString())),
+      ),
+      horariosServicios: Map<String, List<String>>.from(
+        json['horarios_servicios']
+            .map((key, value) => MapEntry(key, List<String>.from(value))),
+      ),
+    );
+  }
 }
 
 class BuildPastorSearchMenu extends StatefulWidget {

@@ -31,11 +31,48 @@
 
   <title>prototipo_asambleas_1</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://unpkg.com/canvaskit-wasm@0.33.0/bin/canvaskit.js"></script>
-  <link rel="preload" href="https://unpkg.com/canvaskit-wasm@0.33.0/bin/canvaskit.wasm" as="fetch" crossorigin="anonymous">
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4GpYKFpPKJjERHpF-QNBw9oDpOiBI1uM&callback=googleMapsCallback" async defer></script>
+  <script>
+    function googleMapsCallback() {
+      console.log('API de Google Maps cargada correctamente');
+    }
+
+    function initMap(mapElement, lat, lng) {
+      console.log('initMap llamado con:', mapElement, lat, lng);
+      if (mapElement) {
+        try {
+          const map = new google.maps.Map(mapElement, {
+            center: { lat: lat, lng: lng },
+            zoom: 15,
+          });
+          new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+          });
+          console.log('Mapa inicializado correctamente');
+        } catch (error) {
+          console.error('Error al inicializar el mapa:', error);
+        }
+      } else {
+        console.error('Elemento del mapa no encontrado');
+      }
+    }
+
+    // Manejador de errores global
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error('Error global:', message, 'en', source, 'línea:', lineno);
+      return false;
+    };
+  </script>
+  <style>
+    gmp-map {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/package-name@version/file"></script>
+  <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>

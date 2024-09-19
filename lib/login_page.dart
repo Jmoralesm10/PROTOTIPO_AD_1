@@ -173,7 +173,8 @@ class _LoginPageState extends State<LoginPage> {
         print('Intentando conectar a la API...');
         final response = await http
             .post(
-              Uri.parse('http://192.168.56.1:3000/api/asambleas/login'),
+              Uri.parse(
+                  'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/login'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'email': _email, 'password': _password}),
             )
