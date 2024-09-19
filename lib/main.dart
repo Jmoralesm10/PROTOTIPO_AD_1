@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'platform_file.dart';
 import 'package:http_parser/http_parser.dart';
 import 'map_widget.dart';
+import 'package:intl/intl.dart';
 
 // Importación condicional
 import 'web_image_picker.dart' if (dart.library.io) 'mobile_image_picker.dart'
@@ -1054,25 +1055,23 @@ class _BuildMenuState extends State<BuildMenu> {
             ),
           ],
         ),
-        ...horarios.entries
-            .map((entry) => TableRow(
-                  children: [
-                    TableCell(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(entry.key),
-                      ),
-                    ),
-                    TableCell(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                            entry.value.map((hora) => '$hora:00').join(', ')),
-                      ),
-                    ),
-                  ],
-                ))
-            .toList(),
+        ...horarios.entries.map((entry) => TableRow(
+              children: [
+                TableCell(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(entry.key),
+                  ),
+                ),
+                TableCell(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child:
+                        Text(entry.value.map((hora) => '$hora:00').join(', ')),
+                  ),
+                ),
+              ],
+            )),
       ],
     );
   }
@@ -1280,16 +1279,18 @@ class BuildPastorSearchMenu extends StatefulWidget {
 }
 
 class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
-  //final Completer<GoogleMapController> _controller = Completer();
   bool showAddForm = false;
   final _formKey = GlobalKey<FormState>();
+  final _searchController = TextEditingController();
+  final _dpiController = TextEditingController();
+  List<Pastor> _pastores = [];
+  bool _isLoading = false;
 
   // Controladores para los campos del formulario
   final _primerNombreController = TextEditingController();
   final _segundoNombreController = TextEditingController();
   final _primerApellidoController = TextEditingController();
   final _segundoApellidoController = TextEditingController();
-  final _dpiController = TextEditingController();
   final _fechaNacimientoController = TextEditingController();
   final _carnetPastorController = TextEditingController();
   final _iglesiaController = TextEditingController();
@@ -1299,14 +1300,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   final _fechaInicioCargo = TextEditingController();
   bool? _estudioBiblico;
 
-  // Mapa para almacenar los horarios de servicios
-  Map<String, List<TimeOfDay>> horarios = {
-    'Lunes': [],
-    'Martes': [],
-    'Miércoles': [],
-    'Jueves': [],
-    'Viernes': []
-  };
+  PlatformFile? _fotoPerfil;
 
   @override
   Widget build(BuildContext context) {
@@ -1350,11 +1344,21 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                   ),
                 const SizedBox(height: 20),
                 if (!showAddForm) ...[
-                  const TextField(
-                    decoration: InputDecoration(
+                  TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
                       hintText: 'Ingrese el nombre del pastor',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _dpiController,
+                    decoration: const InputDecoration(
+                      hintText: 'Ingrese el DPI del pastor',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.credit_card),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -1362,9 +1366,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Implementar lógica de búsqueda
-                          },
+                          onPressed: _buscarPastores,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromARGB(255, 2, 56, 174),
@@ -1396,7 +1398,10 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildPastorCard(),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    _buildPastoresList(),
                 ] else ...[
                   _buildAddPastorForm(isDesktop),
                 ],
@@ -1408,6 +1413,129 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     );
   }
 
+  void _buscarPastores() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://192.168.56.1:3000/api.asambleasdedios.gt/api/asambleas/buscar-pastores?nombre=${_searchController.text}&dpi=${_dpiController.text}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> pastoresData = json.decode(response.body);
+        setState(() {
+          _pastores =
+              pastoresData.map((item) => Pastor.fromJson(item)).toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load pastores');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar pastores: $e')),
+      );
+    }
+  }
+
+  Widget _buildPastoresList() {
+    if (_pastores.isEmpty) {
+      return const Center(child: Text('No se encontraron pastores'));
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _pastores.length,
+      itemBuilder: (context, index) {
+        return _buildPastorCard(_pastores[index]);
+      },
+    );
+  }
+
+  Widget _buildPastorCard(Pastor pastor) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          Container(
+            height: 150,
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
+              ),
+            ),
+            child: Center(
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.white,
+                backgroundImage: pastor.fotoPerfil != null
+                    ? NetworkImage('http://localhost:3000${pastor.fotoPerfil}')
+                    : const AssetImage('assets/default_profile.png')
+                        as ImageProvider,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  pastor.nombreCompleto,
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                _buildInfoRow(Icons.church, pastor.nombreIglesia),
+                _buildInfoRow(Icons.work, pastor.descripcionCargo),
+                _buildInfoRow(Icons.credit_card, 'DPI: ${pastor.dpi}'),
+                _buildInfoRow(Icons.cake,
+                    'Nacimiento: ${_formatDate(pastor.fechaNacimiento)}'),
+                _buildInfoRow(Icons.badge, 'Carnet: ${pastor.carnetPastor}'),
+                _buildInfoRow(Icons.email, pastor.email),
+                _buildInfoRow(Icons.phone, pastor.telefono),
+                _buildInfoRow(Icons.calendar_today,
+                    'Inicio cargo: ${_formatDate(pastor.fechaInicioCargo)}'),
+                _buildInfoRow(Icons.school,
+                    'Estudió en instituto bíblico: ${pastor.estudioBiblico == "1" ? 'Sí' : 'No'}'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.blue),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 16))),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String dateString) {
+    final date = DateTime.parse(dateString);
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
   Widget _buildAddPastorForm(bool isDesktop) {
     return Form(
       key: _formKey,
@@ -1417,6 +1545,24 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: GestureDetector(
+                  onTap: _getImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _fotoPerfil != null
+                        ? (kIsWeb
+                            ? NetworkImage(_fotoPerfil!.path)
+                            : FileImage(File(_fotoPerfil!.path))
+                                as ImageProvider)
+                        : null,
+                    child: _fotoPerfil == null
+                        ? const Icon(Icons.add_a_photo, size: 50)
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               if (isDesktop)
                 Row(
                   children: [
@@ -1621,173 +1767,154 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     );
   }
 
-  List<Widget> _buildServiceSchedules() {
-    return horarios.entries.map((entry) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Row(
-            children: [
-              ElevatedButton(
-                child: const Text('Agregar Horario'),
-                onPressed: () => _selectTime(entry.key),
-              ),
-              ...entry.value.map((time) => Chip(
-                    label: Text(time.format(context)),
-                    onDeleted: () => _removeTime(entry.key, time),
-                  )),
-            ],
-          ),
-        ],
-      );
-    }).toList();
-  }
-
-  void _selectTime(String day) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null && !horarios[day]!.contains(picked)) {
+  Future<void> _getImage() async {
+    final PlatformFile? result = await image_picker.getWebImage();
+    if (result != null) {
       setState(() {
-        horarios[day]!.add(picked);
+        _fotoPerfil = result;
       });
     }
   }
 
-  void _removeTime(String day, TimeOfDay time) {
-    setState(() {
-      horarios[day]!.remove(time);
-    });
-  }
-
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Aquí iría la lógica para guardar los datos del pastor
-      print('Formulario válido, datos listos para ser guardados');
-      // Después de guardar, volvemos a la vista de búsqueda
-      setState(() {
-        showAddForm = false;
-      });
+      String apiUrl =
+          'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/insertar-pastor';
+
+      try {
+        var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+        // Agregar los campos de texto
+        request.fields['primer_nombre'] = _primerNombreController.text;
+        request.fields['segundo_nombre'] = _segundoNombreController.text;
+        request.fields['primer_apellido'] = _primerApellidoController.text;
+        request.fields['segundo_apellido'] = _segundoApellidoController.text;
+        request.fields['dpi'] = _dpiController.text;
+        request.fields['fecha_nacimiento'] = _fechaNacimientoController.text;
+        request.fields['carnet_pastor'] = _carnetPastorController.text;
+        request.fields['email'] = _emailController.text;
+        request.fields['telefono'] = _telefonoController.text;
+        request.fields['fecha_inicio_cargo'] = _fechaInicioCargo.text;
+        request.fields['estudio_biblico'] = _estudioBiblico.toString();
+        request.fields['iglesia_id'] = _iglesiaController.text;
+        request.fields['cargo_id'] = _cargoController.text;
+
+        // Agregar la foto de perfil si existe
+        if (_fotoPerfil != null) {
+          var bytes = await _fotoPerfil!.readAsBytes();
+          var multipartFile = http.MultipartFile.fromBytes(
+            'fotoPerfil',
+            bytes,
+            filename: 'foto_perfil_pastor.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          );
+          request.files.add(multipartFile);
+        }
+
+        // Enviar la solicitud
+        var streamedResponse =
+            await request.send().timeout(const Duration(seconds: 30));
+        var response = await http.Response.fromStream(streamedResponse);
+
+        print('Código de estado: ${response.statusCode}');
+        print('Cuerpo de la respuesta: ${response.body}');
+
+        if (response.statusCode == 201) {
+          try {
+            final responseData = jsonDecode(response.body);
+            _showAlert('Guardado con éxito', responseData['mensaje']);
+            setState(() {
+              showAddForm = false;
+            });
+          } catch (e) {
+            _showAlert('Error',
+                'La respuesta del servidor no es JSON válido: ${response.body}');
+          }
+        } else {
+          _showAlert('Error',
+              'Error del servidor: ${response.statusCode}\n${response.body}');
+        }
+      } catch (e) {
+        _showAlert('Error', 'Ocurrió un error inesperado: $e');
+      }
     }
   }
 
-  Widget _buildPastorCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: NetworkImage(
-                    'https://cdn-icons-png.flaticon.com/512/3135/3135768.png'),
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Nombre: Enrique Cardona Garcia',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('Edad: 46'),
-            Text('Fecha de nacimiento: 05/02/1978'),
-            Text('Nombre de la Iglesia: Nueva vida'),
-            Text('Ubicación de la Iglesia: Guastatoya, El Progreso'),
-            Text('Teléfono: 37564265'),
-            Text('Correo: enriquecardona@gmail.com'),
-            Text('Cargo actual: Pastor'),
-            Text('Fecha de inicio del cargo: 03/11/2020'),
-            Text('Estudió en instituto bíblico: Sí'),
-            SizedBox(height: 16),
-            Text('Ubicación:', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceScheduleTable() {
-    final Map<String, List<String>> horarios = {
-      'Lunes': ['19:00'],
-      'Martes': [],
-      'Miércoles': ['19:00'],
-      'Jueves': [],
-      'Viernes': ['19:00'],
-    };
-
-    return Table(
-      border: TableBorder.all(),
-      children: horarios.entries.map((entry) {
-        return TableRow(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(entry.key,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(entry.value.isEmpty
-                  ? 'No hay servicios'
-                  : entry.value.join(', ')),
+  void _showAlert(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
           ],
         );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSocialMediaLinks() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          child: const Text('Facebook: facebook.com/nuevavida',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://facebook.com/nuevavida')),
-        ),
-        InkWell(
-          child: const Text('Instagram: @nuevavida',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://instagram.com/nuevavida')),
-        ),
-        InkWell(
-          child: const Text('Sitio Web: www.nuevavida.org',
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://www.nuevavida.org')),
-        ),
-      ],
-    );
-  }
-
-  /*Widget _buildGoogleMap(LatLng location) {
-    return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: location,
-        zoom: 15,
-      ),
-      markers: {
-        Marker(
-          markerId: const MarkerId('pastor'),
-          position: location,
-        ),
-      },
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
       },
     );
-  }*/
+  }
+}
+
+class Pastor {
+  final String primerNombre;
+  final String segundoNombre;
+  final String primerApellido;
+  final String segundoApellido;
+  final String dpi;
+  final String fechaNacimiento;
+  final String carnetPastor;
+  final String email;
+  final String telefono;
+  final String fechaInicioCargo;
+  final String estudioBiblico;
+  final String nombreIglesia;
+  final String descripcionCargo;
+  final String? fotoPerfil;
+
+  Pastor({
+    required this.primerNombre,
+    required this.segundoNombre,
+    required this.primerApellido,
+    required this.segundoApellido,
+    required this.dpi,
+    required this.fechaNacimiento,
+    required this.carnetPastor,
+    required this.email,
+    required this.telefono,
+    required this.fechaInicioCargo,
+    required this.estudioBiblico,
+    required this.nombreIglesia,
+    required this.descripcionCargo,
+    this.fotoPerfil,
+  });
+
+  String get nombreCompleto =>
+      '$primerNombre $segundoNombre $primerApellido $segundoApellido';
+
+  factory Pastor.fromJson(Map<String, dynamic> json) {
+    return Pastor(
+      primerNombre: json['primer_nombre'],
+      segundoNombre: json['segundo_nombre'],
+      primerApellido: json['primer_apellido'],
+      segundoApellido: json['segundo_apellido'],
+      dpi: json['dpi'],
+      fechaNacimiento: json['fecha_nacimiento'],
+      carnetPastor: json['carnet_pastor'],
+      email: json['email'],
+      telefono: json['telefono'],
+      fechaInicioCargo: json['fecha_inicio_cargo'],
+      estudioBiblico: json['estudio_biblico'],
+      nombreIglesia: json['nombre_iglesia'],
+      descripcionCargo: json['descripcion_cargo'],
+      fotoPerfil: json['fotoPerfil'],
+    );
+  }
 }
 
 class Anuncio {

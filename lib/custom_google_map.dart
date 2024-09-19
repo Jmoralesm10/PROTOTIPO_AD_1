@@ -7,8 +7,7 @@ class CustomGoogleMap extends StatelessWidget {
   final double lat;
   final double lng;
 
-  const CustomGoogleMap({Key? key, required this.lat, required this.lng})
-      : super(key: key);
+  const CustomGoogleMap({super.key, required this.lat, required this.lng});
 
   @override
   Widget build(BuildContext context) {
