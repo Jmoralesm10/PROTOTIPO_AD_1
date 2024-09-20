@@ -191,7 +191,10 @@ class _LoginPageState extends State<LoginPage> {
             print('Token recibido. Iniciando sesión...');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => const MyHomePage(title: 'Prototipo app'),
+                builder: (context) => MyHomePage(
+                  title: 'Prototipo app',
+                  userEmail: _email, // Pasar el email del usuario
+                ),
               ),
             );
           } else {

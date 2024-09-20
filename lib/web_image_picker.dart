@@ -17,7 +17,8 @@ Future<PlatformFile?> getWebImage() async {
     final result = reader.result;
     if (result is List<int>) {
       final uint8List = Uint8List.fromList(result);
-      return WebFile(html.Url.createObjectUrlFromBlob(file));
+      final blobUrl = html.Url.createObjectUrlFromBlob(file);
+      return WebFile(blobUrl, uint8List, file.name);
     }
   }
   return null;

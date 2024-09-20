@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'login_page.dart'; // Importa el nuevo archivo
 import 'package:http/http.dart' as http;
@@ -12,10 +11,10 @@ import 'platform_file.dart';
 import 'package:http_parser/http_parser.dart';
 import 'map_widget.dart';
 import 'package:intl/intl.dart';
-
-// Importación condicional
+import 'file_picker.dart' as file_picker;
 import 'web_image_picker.dart' if (dart.library.io) 'mobile_image_picker.dart'
     as image_picker;
+import 'platform_file.dart' as custom;
 
 void main() {
   runApp(const MyApp());
@@ -41,16 +40,16 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.title, required this.userEmail});
 
   final String title;
+  final String userEmail;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  //final Completer<GoogleMapController> _controller = Completer();
   bool _showSearchForm = false;
   bool _showPastorSearchForm = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -401,8 +400,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildNewAnnouncementForm() {
     final TextEditingController textController = TextEditingController();
-    File? selectedImage;
-    //File? selectedPdf;
+    custom.PlatformFile? selectedImage;
+    custom.PlatformFile? selectedFile;
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
@@ -435,11 +434,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     label: const Text('Agregar imagen',
                         style: TextStyle(color: Colors.blue)),
                     onPressed: () async {
-                      final pickedFile = await ImagePicker()
-                          .pickImage(source: ImageSource.gallery);
-                      if (pickedFile != null) {
+                      final result = await image_picker.getWebImage();
+                      if (result != null) {
                         setState(() {
-                          selectedImage = File(pickedFile.path);
+                          selectedImage = result;
                         });
                       }
                     },
@@ -449,16 +447,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.picture_as_pdf, color: Colors.blue),
-                    label: const Text('Agregar PDF',
+                    icon: const Icon(Icons.attach_file, color: Colors.blue),
+                    label: const Text('Agregar archivo',
                         style: TextStyle(color: Colors.blue)),
                     onPressed: () async {
-                      // Implementar lógica para seleccionar PDF
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Funcionalidad de agregar PDF no implementada')),
-                      );
+                      final result = await file_picker.pickFile();
+                      if (result != null) {
+                        setState(() {
+                          selectedFile = result;
+                        });
+                        print('Archivo seleccionado: ${result.name}');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -470,7 +469,21 @@ class _MyHomePageState extends State<MyHomePage> {
               if (selectedImage != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Image.file(selectedImage!, height: 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Imagen seleccionada: ${selectedImage!.name}'),
+                      const SizedBox(height: 8),
+                      kIsWeb
+                          ? Image.network(selectedImage!.path, height: 100)
+                          : Image.file(File(selectedImage!.path), height: 100),
+                    ],
+                  ),
+                ),
+              if (selectedFile != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Archivo seleccionado: ${selectedFile!.name}'),
                 ),
               const SizedBox(height: 16),
               Row(
@@ -478,14 +491,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Implementar lógica para publicar el anuncio
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Anuncio publicado (simulado)')),
-                        );
-                        Navigator.of(context).pop();
-                      },
+                      onPressed: () => _publicarAnuncio(
+                        textController.text,
+                        selectedImage,
+                        selectedFile,
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
@@ -512,6 +522,191 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       },
+    );
+  }
+
+  void _publicarAnuncio(String texto, custom.PlatformFile? imagen,
+      custom.PlatformFile? archivo) async {
+    String userEmail = widget.userEmail;
+    var uri = Uri.parse(
+        'http://192.168.56.1:3000/api.asambleasdedios.gt/api/asambleas/crear-anuncio');
+    var request = http.MultipartRequest('POST', uri);
+
+    request.fields['email'] = userEmail;
+    request.fields['texto'] = texto;
+
+    try {
+      if (imagen != null) {
+        var bytes = await imagen.readAsBytes();
+        var multipartFile = http.MultipartFile.fromBytes(
+          'imagen',
+          bytes,
+          filename: imagen.name,
+          contentType: MediaType.parse(
+              imagen.name.endsWith('.png') ? 'image/png' : 'image/jpeg'),
+        );
+        request.files.add(multipartFile);
+      }
+
+      if (archivo != null) {
+        print('Archivo seleccionado: ${archivo.name}');
+        var bytes = await archivo.readAsBytes();
+        print('Tamaño del archivo: ${bytes.length} bytes');
+        var mimeType = _getMimeType(archivo.name);
+        print('Tipo MIME del archivo: $mimeType');
+        var multipartFile = http.MultipartFile.fromBytes(
+          'archivo',
+          bytes,
+          filename: archivo.name,
+          contentType: MediaType.parse(mimeType),
+        );
+        request.files.add(multipartFile);
+      }
+
+      print('Enviando solicitud...');
+      var streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
+      print(
+          'Respuesta recibida. Código de estado: ${streamedResponse.statusCode}');
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print('Cuerpo de la respuesta: ${response.body}');
+
+      if (response.statusCode == 201) {
+        Navigator.of(context).pop();
+        _mostrarMensaje('Éxito', 'Anuncio publicado con éxito');
+      } else {
+        print('Error del servidor: ${response.statusCode}');
+        print('Respuesta del servidor: ${response.body}');
+        _mostrarMensaje('Error',
+            'Error al publicar el anuncio: ${response.reasonPhrase}\n${response.body}');
+      }
+    } catch (e) {
+      print('Error al publicar el anuncio: $e');
+      _mostrarMensaje(
+          'Error', 'Ocurrió un error inesperado al publicar el anuncio: $e');
+    }
+  }
+
+  String _getMimeType(String fileName) {
+    switch (fileName.split('.').last.toLowerCase()) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'ppt':
+        return 'application/vnd.ms-powerpoint';
+      case 'pptx':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  void _mostrarMensaje(String titulo, String mensaje) {
+    // Asegurarse de que el contexto sea válido antes de mostrar el diálogo
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(titulo),
+            content: Text(mensaje),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Aceptar'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      // Si el widget ya no está montado, imprimir el mensaje en la consola
+      print('No se pudo mostrar el mensaje: $titulo - $mensaje');
+    }
+  }
+}
+
+class Anuncio {
+  final String imagenPerfil;
+  final String nombre;
+  final String texto;
+  final String archivo;
+  final bool esImagen;
+
+  Anuncio({
+    required this.imagenPerfil,
+    required this.nombre,
+    required this.texto,
+    required this.archivo,
+    required this.esImagen,
+  });
+}
+
+class AnuncioCard extends StatelessWidget {
+  final Anuncio anuncio;
+
+  const AnuncioCard({super.key, required this.anuncio});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(anuncio.imagenPerfil),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  anuncio.nombre,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(anuncio.texto),
+            const SizedBox(height: 16),
+            if (anuncio.esImagen)
+              Image.network(
+                anuncio.archivo,
+                fit: BoxFit.cover,
+                height: 200,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(Icons.error, color: Colors.red),
+                    ),
+                  );
+                },
+              )
+            else
+              InkWell(
+                child: Text(
+                  anuncio.archivo,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                onTap: () => launchUrl(Uri.parse(anuncio.archivo)),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1913,85 +2108,6 @@ class Pastor {
       nombreIglesia: json['nombre_iglesia'],
       descripcionCargo: json['descripcion_cargo'],
       fotoPerfil: json['fotoPerfil'],
-    );
-  }
-}
-
-class Anuncio {
-  final String imagenPerfil;
-  final String nombre;
-  final String texto;
-  final String archivo;
-  final bool esImagen;
-
-  Anuncio({
-    required this.imagenPerfil,
-    required this.nombre,
-    required this.texto,
-    required this.archivo,
-    required this.esImagen,
-  });
-}
-
-class AnuncioCard extends StatelessWidget {
-  final Anuncio anuncio;
-
-  const AnuncioCard({super.key, required this.anuncio});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(anuncio.imagenPerfil),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  anuncio.nombre,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(anuncio.texto),
-            const SizedBox(height: 16),
-            if (anuncio.esImagen)
-              Image.network(
-                anuncio.archivo,
-                fit: BoxFit.cover,
-                height: 200,
-                width: double.infinity,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.error, color: Colors.red),
-                    ),
-                  );
-                },
-              )
-            else
-              InkWell(
-                child: Text(
-                  anuncio.archivo,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-                onTap: () => launchUrl(Uri.parse(anuncio.archivo)),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
