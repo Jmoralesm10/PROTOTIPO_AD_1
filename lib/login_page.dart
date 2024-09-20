@@ -159,7 +159,6 @@ class _LoginPageState extends State<LoginPage> {
         var connectivityResult = await (Connectivity().checkConnectivity());
         isConnected = connectivityResult != ConnectivityResult.none;
       } catch (e) {
-        // Si falla la verificación de conectividad, asumimos que hay conexión
         print('Error al verificar la conectividad: $e');
       }
 
@@ -178,8 +177,7 @@ class _LoginPageState extends State<LoginPage> {
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'email': _email, 'password': _password}),
             )
-            .timeout(
-                const Duration(seconds: 10)); // Añade un timeout de 10 segundos
+            .timeout(const Duration(seconds: 10));
 
         print('Respuesta recibida. Código de estado: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
@@ -193,7 +191,9 @@ class _LoginPageState extends State<LoginPage> {
               MaterialPageRoute(
                 builder: (context) => MyHomePage(
                   title: 'Prototipo app',
-                  userEmail: _email, // Pasar el email del usuario
+                  userEmail: _email,
+                  userRole: responseData['usuario']['idRol'],
+                  token: responseData['token'],
                 ),
               ),
             );

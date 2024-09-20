@@ -40,10 +40,18 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title, required this.userEmail});
+  const MyHomePage({
+    Key? key,
+    required this.title,
+    required this.userEmail,
+    required this.userRole,
+    required this.token,
+  }) : super(key: key);
 
   final String title;
   final String userEmail;
+  final int userRole;
+  final String token;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -104,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               if (isDesktop)
                 Container(
-                  width: 200,
+                  width: 250,
                   color: const Color.fromARGB(255, 2, 56, 174),
                   child: Column(
                     children: [
@@ -120,23 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     if (isDesktop) _buildDesktopHeader(),
                     Expanded(
-                      child: _showSearchForm
-                          ? BuildMenu(
-                              onBack: () {
-                                setState(() {
-                                  _showSearchForm = false;
-                                });
-                              },
-                            )
-                          : _showPastorSearchForm
-                              ? BuildPastorSearchMenu(
-                                  onBack: () {
-                                    setState(() {
-                                      _showPastorSearchForm = false;
-                                    });
-                                  },
-                                )
-                              : _buildMainContent(),
+                      child: _currentContent(),
                     ),
                   ],
                 ),
@@ -152,6 +144,30 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       },
     );
+  }
+
+  Widget _currentContent() {
+    if (_showSearchForm) {
+      return BuildMenu(
+        onBack: () {
+          setState(() {
+            _showSearchForm = false;
+          });
+        },
+        userRole: widget.userRole,
+      );
+    } else if (_showPastorSearchForm) {
+      return BuildPastorSearchMenu(
+        onBack: () {
+          setState(() {
+            _showPastorSearchForm = false;
+          });
+        },
+        userRole: widget.userRole,
+      );
+    } else {
+      return _buildMainContent();
+    }
   }
 
   PreferredSizeWidget _buildMobileAppBar() {
@@ -274,16 +290,24 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
         ),
+        if (widget.userRole <= 1)
+          ListTile(
+            leading:
+                const Icon(Icons.admin_panel_settings, color: Colors.white),
+            title: const Text('Panel de Administración',
+                style: TextStyle(color: Colors.white)),
+            onTap: () {
+              // Implementar navegación al panel de administración
+            },
+          ),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.white),
           title: const Text('Cerrar sesión',
               style: TextStyle(color: Colors.white)),
           onTap: () {
-            // Llamar al método para cerrar sesión
             _cerrarSesion();
           },
         ),
-        // Otros elementos del menú para desktop...
       ],
     );
   }
@@ -353,13 +377,11 @@ class _MyHomePageState extends State<MyHomePage> {
             _cerrarSesion();
           },
         ),
-        // Otros elementos del menú para móvil...
       ],
     );
   }
 
   void _cerrarSesion() {
-    // Aquí puedes agregar lógica adicional si es necesario, como limpiar datos de usuario, etc.
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginPage()),
       (Route<dynamic> route) => false,
@@ -369,7 +391,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildMainContent() {
     return Column(
       children: [
-        _buildNewAnnouncementButton(),
+        if (widget.userRole <= 3) _buildNewAnnouncementButton(),
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -378,7 +400,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: ListView.builder(
                     itemCount: _anuncios.length,
                     itemBuilder: (context, index) {
-                      return AnuncioCard(anuncio: _anuncios[index]);
+                      return AnuncioCard(
+                        anuncio: _anuncios[index],
+                        userRole: widget.userRole,
+                      );
                     },
                   ),
                 ),
@@ -388,28 +413,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildNewAnnouncementButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.add),
-        label: const Text('Agregar anuncio'),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                content: SingleChildScrollView(
-                  child: _buildNewAnnouncementForm(),
-                ),
-              );
-            },
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 2, 56, 174),
-          foregroundColor: Colors.white,
-        ),
-      ),
+    return ElevatedButton(
+      onPressed: () {
+        _showNewAnnouncementForm();
+      },
+      child: const Text('Nuevo Anuncio'),
     );
   }
 
@@ -535,6 +543,26 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showNewAnnouncementForm() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Nuevo Anuncio'),
+          content: _buildNewAnnouncementForm(),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         );
       },
     );
@@ -693,8 +721,13 @@ class Anuncio {
 
 class AnuncioCard extends StatelessWidget {
   final Anuncio anuncio;
+  final int userRole;
 
-  const AnuncioCard({super.key, required this.anuncio});
+  const AnuncioCard({
+    Key? key,
+    required this.anuncio,
+    required this.userRole,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -705,7 +738,6 @@ class AnuncioCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado con foto de perfil de la iglesia y su nombre
             Row(
               children: [
                 CircleAvatar(
@@ -729,7 +761,6 @@ class AnuncioCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Foto de perfil del pastor y su nombre
             Row(
               children: [
                 CircleAvatar(
@@ -772,7 +803,7 @@ class AnuncioCard extends StatelessWidget {
                   },
                 ),
               ),
-            if (anuncio.pdf != null)
+            if (userRole != 4 && anuncio.pdf != null)
               ElevatedButton.icon(
                 icon: const Icon(Icons.picture_as_pdf),
                 label: const Text('Ver PDF'),
@@ -806,8 +837,13 @@ class AnuncioCard extends StatelessWidget {
 
 class BuildMenu extends StatefulWidget {
   final VoidCallback onBack;
+  final int userRole;
 
-  const BuildMenu({super.key, required this.onBack});
+  const BuildMenu({
+    Key? key,
+    required this.onBack,
+    required this.userRole,
+  }) : super(key: key);
 
   @override
   _BuildMenuState createState() => _BuildMenuState();
@@ -831,7 +867,6 @@ class _BuildMenuState extends State<BuildMenu> {
   List<Iglesia> _iglesias = [];
   bool _isLoading = false;
 
-  // Mapa actualizado para incluir todos los días de la semana
   Map<String, List<TimeOfDay>> horarios = {
     'Lunes': [],
     'Martes': [],
@@ -923,24 +958,26 @@ class _BuildMenuState extends State<BuildMenu> {
                               style: TextStyle(fontSize: 16)),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              showAddForm = true;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 2, 56, 174),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
+                      if (widget.userRole <= 2) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                showAddForm = true;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromARGB(255, 2, 56, 174),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: const Text('Agregar nueva',
+                                style: TextStyle(fontSize: 16)),
                           ),
-                          child: const Text('Agregar nueva',
-                              style: TextStyle(fontSize: 16)),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -949,7 +986,7 @@ class _BuildMenuState extends State<BuildMenu> {
                   else
                     _buildIglesiasList(),
                 ] else ...[
-                  _buildAddChurchForm(isDesktop),
+                  _buildAddIglesiaForm(isDesktop),
                 ],
               ],
             ),
@@ -959,7 +996,7 @@ class _BuildMenuState extends State<BuildMenu> {
     );
   }
 
-  Widget _buildAddChurchForm(bool isDesktop) {
+  Widget _buildAddIglesiaForm(bool isDesktop) {
     return Form(
       key: _formKey,
       child: Column(
@@ -1153,21 +1190,18 @@ class _BuildMenuState extends State<BuildMenu> {
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Convertir los horarios a un formato serializable
       Map<String, List<String>> horariosSerializables = {};
       horarios.forEach((dia, tiempos) {
         horariosSerializables[dia] =
             tiempos.map((t) => timeOfDayToString(t)).toList();
       });
 
-      // URL de tu API
       String apiUrl =
           'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro-iglesia';
 
       try {
         var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-        // Agregar los campos de texto
         request.fields['nombre'] = _nombreIglesiaController.text;
         request.fields['pastor'] = _nombrePastorController.text;
         request.fields['direccion'] = _direccionController.text;
@@ -1178,7 +1212,6 @@ class _BuildMenuState extends State<BuildMenu> {
         request.fields['sitioWeb'] = _sitioWebController.text;
         request.fields['horarios'] = json.encode(horariosSerializables);
 
-        // Agregar la imagen si existe
         if (_image != null) {
           var bytes = await _image!.readAsBytes();
           var multipartFile = http.MultipartFile.fromBytes(
@@ -1190,7 +1223,6 @@ class _BuildMenuState extends State<BuildMenu> {
           request.files.add(multipartFile);
         }
 
-        // Enviar la solicitud
         var streamedResponse =
             await request.send().timeout(const Duration(seconds: 30));
         var response = await http.Response.fromStream(streamedResponse);
@@ -1198,14 +1230,12 @@ class _BuildMenuState extends State<BuildMenu> {
         final responseData = jsonDecode(response.body);
 
         if (response.statusCode == 201) {
-          // La iglesia se guardó exitosamente
           _showAlert(
               'Guardada con éxito', 'La iglesia se registró correctamente');
           setState(() {
             showAddForm = false;
           });
         } else {
-          // Mostrar el mensaje de error devuelto por la API
           _showAlert('Error',
               responseData['message'] ?? 'Ocurrió un error desconocido');
         }
@@ -1258,205 +1288,131 @@ class _BuildMenuState extends State<BuildMenu> {
 
   Widget _buildIglesiaCard(Iglesia iglesia) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: iglesia.fotoPerfil != null
-                      ? NetworkImage(
-                          'https://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}')
-                      : null,
-                  child: iglesia.fotoPerfil == null
-                      ? const Icon(Icons.church)
-                      : null,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        iglesia.nombre,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text('Pastor: ${iglesia.pastor}'),
-                      const SizedBox(height: 8),
-                      Text('Dirección: ${iglesia.direccion}'),
-                      Text(
-                          'Coordenadas: ${iglesia.latitud}, ${iglesia.longitud}'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text('Horarios de servicios:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildHorariosTable(iglesia.horariosServicios),
-            const SizedBox(height: 16),
-            const Text('Redes sociales:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildSocialMediaLinks(iglesia.redesSociales),
-            const SizedBox(height: 16),
-            const Text('Ubicación:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(
-              height: 300,
-              child: MapWidget(
-                lat: iglesia.latitud,
-                lng: iglesia.longitud,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          if (iglesia.fotoPerfil != null)
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+              child: Image.network(
+                'https://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}',
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
             ),
-          ],
-        ),
+          SizedBox(
+            height: 200,
+            child: MapWidget(lat: iglesia.latitud, lng: iglesia.longitud),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  iglesia.nombre,
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                _buildInfoRow(Icons.person, 'Pastor: ${iglesia.pastor}'),
+                _buildInfoRow(Icons.location_on, iglesia.direccion),
+                _buildInfoRow(Icons.phone,
+                    'Teléfono: ${iglesia.redesSociales['Teléfono'] ?? 'No disponible'}'),
+                _buildInfoRow(Icons.email,
+                    'Email: ${iglesia.redesSociales['Email'] ?? 'No disponible'}'),
+                _buildInfoRow(Icons.calendar_today, 'Horarios de servicios:'),
+                ...iglesia.horariosServicios.entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: Text('${entry.key}: ${entry.value.join(", ")}'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildSocialMediaButtons(iglesia.redesSociales),
+                if (widget.userRole <= 1) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _editarIglesia(iglesia),
+                        child: const Text('Editar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _eliminarIglesia(iglesia.id),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        child: const Text('Eliminar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHorariosTable(Map<String, List<String>> horarios) {
-    return Table(
-      border: TableBorder.all(color: Colors.grey),
-      children: [
-        const TableRow(
-          children: [
-            TableCell(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child:
-                    Text('Día', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-            TableCell(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('Hora(s)',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-        ...horarios.entries.map((entry) => TableRow(
-              children: [
-                TableCell(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(entry.key),
-                  ),
-                ),
-                TableCell(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child:
-                        Text(entry.value.map((hora) => '$hora:00').join(', ')),
-                  ),
-                ),
-              ],
-            )),
-      ],
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
     );
   }
 
-  Widget _buildSocialMediaLinks(Map<String, String> redes) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSocialMediaButtons(Map<String, String> redes) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         if (redes.containsKey('Facebook'))
-          Builder(
-            builder: (context) {
-              final originalUrl = redes['Facebook']!;
-              final processedUrl = _processSocialUrl(originalUrl);
-              return _buildSocialMediaButton(
-                icon: Icons.facebook,
-                color: Colors.blue,
-                text: 'Facebook',
-                url: processedUrl,
-                fallbackUrl: processedUrl,
-              );
-            },
+          _buildSocialMediaButton(
+            icon: Icons.facebook,
+            color: Colors.blue,
+            url: redes['Facebook']!,
           ),
         if (redes.containsKey('Instagram'))
-          Builder(
-            builder: (context) {
-              final originalUrl = redes['Instagram']!;
-              final processedUrl = _processSocialUrl(originalUrl);
-              return _buildSocialMediaButton(
-                icon: Icons.camera_alt,
-                color: Colors.purple,
-                text: 'Instagram',
-                url: processedUrl,
-                fallbackUrl: processedUrl,
-              );
-            },
+          _buildSocialMediaButton(
+            icon: Icons.camera_alt,
+            color: Colors.purple,
+            url: redes['Instagram']!,
           ),
         if (redes.containsKey('Sitio Web'))
-          Builder(
-            builder: (context) {
-              final originalUrl = redes['Sitio Web']!;
-              final processedUrl = _processSocialUrl(originalUrl);
-              return _buildSocialMediaButton(
-                icon: Icons.language,
-                color: Colors.green,
-                text: 'Sitio Web',
-                url: processedUrl,
-                fallbackUrl: processedUrl,
-              );
-            },
+          _buildSocialMediaButton(
+            icon: Icons.language,
+            color: Colors.green,
+            url: redes['Sitio Web']!,
           ),
       ],
     );
-  }
-
-  String _processSocialUrl(String url) {
-    // Eliminar comillas dobles extras al principio y al final
-    url = url.replaceAll(RegExp(r'^"|"$'), '');
-
-    // Eliminar el prefijo '@' si existe
-    if (url.startsWith('@')) {
-      url = url.substring(1);
-    }
-
-    // Verificar si la URL ya es válida
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-
-    // Si no es una URL válida, intentar corregirla
-    return 'https://$url';
   }
 
   Widget _buildSocialMediaButton({
     required IconData icon,
     required Color color,
-    required String text,
     required String url,
-    required String fallbackUrl,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: ElevatedButton.icon(
-        icon: Icon(icon, color: color),
-        label: Text(text),
-        onPressed: () => _launchURL(url, fallbackUrl: fallbackUrl),
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-        ),
-      ),
+    return IconButton(
+      icon: Icon(icon, color: color),
+      onPressed: () => _launchURL(url),
     );
   }
 
-  Future<void> _launchURL(String url, {required String fallbackUrl}) async {
+  Future<void> _launchURL(String url) async {
     try {
       if (url.isEmpty) {
         throw 'URL vacía';
@@ -1509,6 +1465,14 @@ class _BuildMenuState extends State<BuildMenu> {
       );
     }
   }
+
+  void _editarIglesia(Iglesia iglesia) {
+    // Implementar la lógica para editar la iglesia
+  }
+
+  void _eliminarIglesia(int id) {
+    // Implementar la lógica para eliminar la iglesia
+  }
 }
 
 class Iglesia {
@@ -1559,8 +1523,13 @@ class Iglesia {
 
 class BuildPastorSearchMenu extends StatefulWidget {
   final VoidCallback onBack;
+  final int userRole;
 
-  const BuildPastorSearchMenu({super.key, required this.onBack});
+  const BuildPastorSearchMenu({
+    Key? key,
+    required this.onBack,
+    required this.userRole,
+  }) : super(key: key);
 
   @override
   _BuildPastorSearchMenuState createState() => _BuildPastorSearchMenuState();
@@ -1640,15 +1609,17 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                       suffixIcon: Icon(Icons.search),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _dpiController,
-                    decoration: const InputDecoration(
-                      hintText: 'Ingrese el DPI del pastor',
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.credit_card),
+                  if (widget.userRole <= 2) ...[
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _dpiController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ingrese el DPI del pastor',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.credit_card),
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -1665,24 +1636,26 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                               style: TextStyle(fontSize: 16)),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              showAddForm = true;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 2, 56, 174),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
+                      if (widget.userRole <= 2) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                showAddForm = true;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromARGB(255, 2, 56, 174),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: const Text('Agregar nuevo',
+                                style: TextStyle(fontSize: 16)),
                           ),
-                          child: const Text('Agregar nuevo',
-                              style: TextStyle(fontSize: 16)),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1788,17 +1761,35 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 ),
                 const SizedBox(height: 10),
                 _buildInfoRow(Icons.church, pastor.nombreIglesia),
+                _buildInfoRow(Icons.email, pastor.email),
+                _buildInfoRow(Icons.phone, pastor.telefono),
                 _buildInfoRow(Icons.work, pastor.descripcionCargo),
                 _buildInfoRow(Icons.credit_card, 'DPI: ${pastor.dpi}'),
                 _buildInfoRow(Icons.cake,
                     'Nacimiento: ${_formatDate(pastor.fechaNacimiento)}'),
                 _buildInfoRow(Icons.badge, 'Carnet: ${pastor.carnetPastor}'),
-                _buildInfoRow(Icons.email, pastor.email),
-                _buildInfoRow(Icons.phone, pastor.telefono),
                 _buildInfoRow(Icons.calendar_today,
                     'Inicio cargo: ${_formatDate(pastor.fechaInicioCargo)}'),
                 _buildInfoRow(Icons.school,
                     'Estudió en instituto bíblico: ${pastor.estudioBiblico == "1" ? 'Sí' : 'No'}'),
+                if (widget.userRole <= 1) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _editarPastor(pastor),
+                        child: const Text('Editar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _eliminarPastor(pastor.id),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        child: const Text('Eliminar'),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -2068,7 +2059,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       String apiUrl =
-          'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/insertar-pastor';
+          'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/insertar-pastor';
 
       try {
         var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -2148,9 +2139,18 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
       },
     );
   }
+
+  void _editarPastor(Pastor pastor) {
+    // Implementar lógica para editar pastor
+  }
+
+  void _eliminarPastor(String id) {
+    // Implementar lógica para eliminar pastor
+  }
 }
 
 class Pastor {
+  final String id;
   final String primerNombre;
   final String segundoNombre;
   final String primerApellido;
@@ -2167,6 +2167,7 @@ class Pastor {
   final String? fotoPerfil;
 
   Pastor({
+    required this.id,
     required this.primerNombre,
     required this.segundoNombre,
     required this.primerApellido,
@@ -2188,6 +2189,7 @@ class Pastor {
 
   factory Pastor.fromJson(Map<String, dynamic> json) {
     return Pastor(
+      id: json['id'].toString(),
       primerNombre: json['primer_nombre'],
       segundoNombre: json['segundo_nombre'],
       primerApellido: json['primer_apellido'],
