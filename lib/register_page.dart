@@ -189,7 +189,7 @@ class _RegisterPageState extends State<RegisterPage> {
         final response = await http
             .post(
               Uri.parse(
-                  'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro'),
+                  'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'email': _email, 'password': _password}),
             )

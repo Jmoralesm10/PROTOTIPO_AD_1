@@ -53,6 +53,43 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _showSearchForm = false;
   bool _showPastorSearchForm = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Anuncio> _anuncios = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarAnuncios();
+  }
+
+  Future<void> _cargarAnuncios() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/obtener-anuncios?email=${widget.userEmail}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> anunciosData = json.decode(response.body);
+        setState(() {
+          _anuncios =
+              anunciosData.map((item) => Anuncio.fromJson(item)).toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load anuncios');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarMensaje('Error', 'No se pudieron cargar los anuncios: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,43 +367,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildMainContent() {
-    List<Anuncio> anuncios = [
-      Anuncio(
-        imagenPerfil: 'https://cdn-icons-png.flaticon.com/512/3135/3135768.png',
-        nombre: 'Pastor Enrique Cardona Garcia',
-        texto:
-            'Invitación especial a nuestro servicio dominical en la Iglesia Nueva Vida.',
-        archivo: 'https://example.com/invitacion.pdf',
-        esImagen: false,
-      ),
-      Anuncio(
-        imagenPerfil:
-            'https://100noticias.com.ni/media/news/1321dfea429711ee829df929e97d2ea0.jpg',
-        nombre: 'Iglesia Nueva Vida',
-        texto: 'Nuevo estudio bíblico disponible: "Caminando en fe".',
-        archivo: 'https://example.com/estudio_biblico.jpg',
-        esImagen: true,
-      ),
-      Anuncio(
-        imagenPerfil: 'https://cdn-icons-png.flaticon.com/512/3135/3135768.png',
-        nombre: 'Pastor Juan Pérez',
-        texto: 'Conferencia sobre liderazgo cristiano este sábado.',
-        archivo: 'https://example.com/conferencia.pdf',
-        esImagen: false,
-      ),
-      // Puedes añadir más anuncios aquí...
-    ];
-
     return Column(
       children: [
         _buildNewAnnouncementButton(),
         Expanded(
-          child: ListView.builder(
-            itemCount: anuncios.length,
-            itemBuilder: (context, index) {
-              return AnuncioCard(anuncio: anuncios[index]);
-            },
-          ),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _cargarAnuncios,
+                  child: ListView.builder(
+                    itemCount: _anuncios.length,
+                    itemBuilder: (context, index) {
+                      return AnuncioCard(anuncio: _anuncios[index]);
+                    },
+                  ),
+                ),
         ),
       ],
     );
@@ -529,7 +544,7 @@ class _MyHomePageState extends State<MyHomePage> {
       custom.PlatformFile? archivo) async {
     String userEmail = widget.userEmail;
     var uri = Uri.parse(
-        'http://192.168.56.1:3000/api.asambleasdedios.gt/api/asambleas/crear-anuncio');
+        'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/crear-anuncio');
     var request = http.MultipartRequest('POST', uri);
 
     request.fields['email'] = userEmail;
@@ -575,6 +590,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (response.statusCode == 201) {
         Navigator.of(context).pop();
         _mostrarMensaje('Éxito', 'Anuncio publicado con éxito');
+        _cargarAnuncios(); // Recargar los anuncios después de publicar uno nuevo
       } else {
         print('Error del servidor: ${response.statusCode}');
         print('Respuesta del servidor: ${response.body}');
@@ -633,19 +649,46 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class Anuncio {
-  final String imagenPerfil;
-  final String nombre;
+  final int id;
   final String texto;
-  final String archivo;
-  final bool esImagen;
+  final String? imagen;
+  final String? pdf;
+  final DateTime fechaCreacion;
+  final String email;
+  final String nombreCompleto;
+  final String nombreIglesia;
+  final String? fotoPerfilPastor;
+  final String? fotoPerfilIglesia;
 
   Anuncio({
-    required this.imagenPerfil,
-    required this.nombre,
+    required this.id,
     required this.texto,
-    required this.archivo,
-    required this.esImagen,
+    this.imagen,
+    this.pdf,
+    required this.fechaCreacion,
+    required this.email,
+    required this.nombreCompleto,
+    required this.nombreIglesia,
+    this.fotoPerfilPastor,
+    this.fotoPerfilIglesia,
   });
+
+  factory Anuncio.fromJson(Map<String, dynamic> json) {
+    return Anuncio(
+      id: json['id_anuncio'],
+      texto: json['texto'],
+      imagen: json['imagen'],
+      pdf: json['pdf'],
+      fechaCreacion: DateTime.parse(json['fecha_creacion']),
+      email: json['email'],
+      nombreCompleto:
+          '${json['primer_nombre']} ${json['segundo_nombre']} ${json['primer_apellido']} ${json['segundo_apellido']}'
+              .trim(),
+      nombreIglesia: json['nombre_iglesia'],
+      fotoPerfilPastor: json['foto_perfil_pastor'],
+      fotoPerfilIglesia: json['foto_perfil_iglesia'],
+    );
+  }
 }
 
 class AnuncioCard extends StatelessWidget {
@@ -662,52 +705,102 @@ class AnuncioCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Encabezado con foto de perfil de la iglesia y su nombre
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: NetworkImage(anuncio.imagenPerfil),
+                  radius: 30,
+                  backgroundImage: anuncio.fotoPerfilIglesia != null
+                      ? NetworkImage(
+                          'https://asambleasdedios.gt/api.asambleasdedios.gt${anuncio.fotoPerfilIglesia}')
+                      : null,
+                  child: anuncio.fotoPerfilIglesia == null
+                      ? const Icon(Icons.church)
+                      : null,
                 ),
                 const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    anuncio.nombreIglesia,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Foto de perfil del pastor y su nombre
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: anuncio.fotoPerfilPastor != null
+                      ? NetworkImage(
+                          'https://asambleasdedios.gt/api.asambleasdedios.gt${anuncio.fotoPerfilPastor}')
+                      : null,
+                  child: anuncio.fotoPerfilPastor == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                const SizedBox(width: 12),
                 Text(
-                  anuncio.nombre,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  anuncio.nombreCompleto,
+                  style: const TextStyle(fontSize: 16),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(anuncio.texto),
             const SizedBox(height: 16),
-            if (anuncio.esImagen)
-              Image.network(
-                anuncio.archivo,
-                fit: BoxFit.cover,
-                height: 200,
-                width: double.infinity,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.error, color: Colors.red),
-                    ),
-                  );
-                },
-              )
-            else
-              InkWell(
-                child: Text(
-                  anuncio.archivo,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
+            if (anuncio.imagen != null)
+              GestureDetector(
+                onTap: () => _descargarArchivo(
+                    context, anuncio.imagen!, 'imagen_anuncio.jpg'),
+                child: Image.network(
+                  'https://asambleasdedios.gt/api.asambleasdedios.gt${anuncio.imagen}',
+                  fit: BoxFit.cover,
+                  height: 200,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.error, color: Colors.red),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () => launchUrl(Uri.parse(anuncio.archivo)),
               ),
+            if (anuncio.pdf != null)
+              ElevatedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Ver PDF'),
+                onPressed: () => _descargarArchivo(
+                    context, anuncio.pdf!, 'documento_anuncio.pdf'),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              'Publicado el ${DateFormat('dd/MM/yyyy HH:mm').format(anuncio.fechaCreacion)}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _descargarArchivo(
+      BuildContext context, String url, String nombreArchivo) async {
+    final Uri uri =
+        Uri.parse('https://asambleasdedios.gt/api.asambleasdedios.gt$url');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo abrir el archivo: $nombreArchivo')),
+      );
+    }
   }
 }
 
@@ -1069,7 +1162,7 @@ class _BuildMenuState extends State<BuildMenu> {
 
       // URL de tu API
       String apiUrl =
-          'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro-iglesia';
+          'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/registro-iglesia';
 
       try {
         var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -1178,7 +1271,7 @@ class _BuildMenuState extends State<BuildMenu> {
                   radius: 30,
                   backgroundImage: iglesia.fotoPerfil != null
                       ? NetworkImage(
-                          'http://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}')
+                          'https://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}')
                       : null,
                   child: iglesia.fotoPerfil == null
                       ? const Icon(Icons.church)
@@ -1394,7 +1487,7 @@ class _BuildMenuState extends State<BuildMenu> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
+            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
       );
 
       if (response.statusCode == 200) {
@@ -1616,7 +1709,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://192.168.56.1:3000/api.asambleasdedios.gt/api/asambleas/buscar-pastores?nombre=${_searchController.text}&dpi=${_dpiController.text}'),
+            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-pastores?nombre=${_searchController.text}&dpi=${_dpiController.text}'),
       );
 
       if (response.statusCode == 200) {
@@ -1675,7 +1768,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 radius: 60,
                 backgroundColor: Colors.white,
                 backgroundImage: pastor.fotoPerfil != null
-                    ? NetworkImage('http://localhost:3000${pastor.fotoPerfil}')
+                    ? NetworkImage(
+                        'https://asambleasdedios.gt${pastor.fotoPerfil}')
                     : const AssetImage('assets/default_profile.png')
                         as ImageProvider,
               ),

@@ -174,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
         final response = await http
             .post(
               Uri.parse(
-                  'http://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/login'),
+                  'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/login'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'email': _email, 'password': _password}),
             )
