@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
@@ -996,6 +995,37 @@ class _BuildMenuState extends State<BuildMenu> {
     );
   }
 
+  void _buscarIglesias() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> iglesiasData = json.decode(response.body);
+        setState(() {
+          _iglesias =
+              iglesiasData.map((item) => Iglesia.fromJson(item)).toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load iglesias');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar iglesias: $e')),
+      );
+    }
+  }
+
   Widget _buildAddIglesiaForm(bool isDesktop) {
     return Form(
       key: _formKey,
@@ -1293,68 +1323,81 @@ class _BuildMenuState extends State<BuildMenu> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (iglesia.fotoPerfil != null)
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(15)),
-              child: Image.network(
-                'https://asambleasdedios.gt/api.asambleasdedios.gt${iglesia.fotoPerfil}',
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
+          // Encabezado con foto de perfil e información básica
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade100,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
               ),
             ),
-          SizedBox(
-            height: 200,
-            child: MapWidget(lat: iglesia.latitud, lng: iglesia.longitud),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white,
+                  backgroundImage: iglesia.fotoPerfil != null
+                      ? NetworkImage(
+                          'https://asambleasdedios.gt/api.asambleasdedios.gt/imagenes/iglesias/${iglesia.fotoPerfil}')
+                      : const AssetImage('assets/default_church.png')
+                          as ImageProvider,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        iglesia.nombre,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(iglesia.direccion),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          // Información detallada
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  iglesia.nombre,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
                 _buildInfoRow(Icons.person, 'Pastor: ${iglesia.pastor}'),
-                _buildInfoRow(Icons.location_on, iglesia.direccion),
-                _buildInfoRow(Icons.phone,
-                    'Teléfono: ${iglesia.redesSociales['Teléfono'] ?? 'No disponible'}'),
-                _buildInfoRow(Icons.email,
-                    'Email: ${iglesia.redesSociales['Email'] ?? 'No disponible'}'),
-                _buildInfoRow(Icons.calendar_today, 'Horarios de servicios:'),
-                ...iglesia.horariosServicios.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: Text('${entry.key}: ${entry.value.join(", ")}'),
-                  ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Horarios de servicios:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 10),
-                _buildSocialMediaButtons(iglesia.redesSociales),
-                if (widget.userRole <= 1) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _editarIglesia(iglesia),
-                        child: const Text('Editar'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => _eliminarIglesia(iglesia.id),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red),
-                        child: const Text('Eliminar'),
-                      ),
-                    ],
-                  ),
-                ],
+                const SizedBox(height: 8),
+                _buildHorarioTable(iglesia.horariosServicios),
+                const SizedBox(height: 16),
+                const Text(
+                  'Redes sociales:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                _buildSocialMediaLinks(iglesia.redesSociales),
               ],
+            ),
+          ),
+          // Mapa en la parte inferior
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(15),
+                bottomRight: Radius.circular(15),
+              ),
+              child: MapWidget(lat: iglesia.latitud, lng: iglesia.longitud),
             ),
           ),
         ],
@@ -1364,10 +1407,10 @@ class _BuildMenuState extends State<BuildMenu> {
 
   Widget _buildInfoRow(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
+          Icon(icon, size: 20, color: Colors.blue),
           const SizedBox(width: 8),
           Expanded(child: Text(text)),
         ],
@@ -1375,103 +1418,90 @@ class _BuildMenuState extends State<BuildMenu> {
     );
   }
 
-  Widget _buildSocialMediaButtons(Map<String, String> redes) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  Widget _buildHorarioTable(Map<String, List<String>> horarios) {
+    return Table(
+      border: TableBorder.all(color: Colors.blue.shade200),
+      children: horarios.entries.map((entry) {
+        return TableRow(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+          ),
+          children: [
+            TableCell(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(entry.key,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            TableCell(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                    entry.value.map((hora) => _formatHora(hora)).join(", ")),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  String _formatHora(String hora) {
+    int horaInt = int.parse(hora);
+    String periodo = horaInt >= 12 ? 'PM' : 'AM';
+    if (horaInt > 12) horaInt -= 12;
+    return '${horaInt.toString().padLeft(2, '0')}:00 $periodo';
+  }
+
+  Widget _buildSocialMediaLinks(Map<String, String> redes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (redes.containsKey('Facebook'))
-          _buildSocialMediaButton(
-            icon: Icons.facebook,
-            color: Colors.blue,
-            url: redes['Facebook']!,
-          ),
+          _buildSocialMediaLink('Facebook', redes['Facebook']!, Icons.facebook),
         if (redes.containsKey('Instagram'))
-          _buildSocialMediaButton(
-            icon: Icons.camera_alt,
-            color: Colors.purple,
-            url: redes['Instagram']!,
-          ),
+          _buildSocialMediaLink(
+              'Instagram', redes['Instagram']!, Icons.camera_alt),
         if (redes.containsKey('Sitio Web'))
-          _buildSocialMediaButton(
-            icon: Icons.language,
-            color: Colors.green,
-            url: redes['Sitio Web']!,
-          ),
+          _buildSocialMediaLink(
+              'Sitio Web', redes['Sitio Web']!, Icons.language),
       ],
     );
   }
 
-  Widget _buildSocialMediaButton({
-    required IconData icon,
-    required Color color,
-    required String url,
-  }) {
-    return IconButton(
-      icon: Icon(icon, color: color),
-      onPressed: () => _launchURL(url),
+  Widget _buildSocialMediaLink(String platform, String url, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: InkWell(
+        onTap: () => _launchURL(url),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(
+              platform,
+              style: const TextStyle(
+                color: Colors.blue,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Future<void> _launchURL(String url) async {
-    try {
-      if (url.isEmpty) {
-        throw 'URL vacía';
-      }
-      final Uri uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        final bool launched =
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (!launched) {
-          throw 'No se pudo lanzar $url';
-        }
-      } else {
-        throw 'No se puede lanzar $url';
-      }
-    } catch (e) {
-      print('Error al abrir la URL: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo abrir el enlace: $url\nError: $e')),
-      );
+  void _launchURL(String url) async {
+    if (!url.startsWith('http')) {
+      url = 'https://$url';
     }
-  }
-
-  void _buscarIglesias() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> iglesiasData = json.decode(response.body);
-        setState(() {
-          _iglesias =
-              iglesiasData.map((item) => Iglesia.fromJson(item)).toList();
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load iglesias');
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al buscar iglesias: $e')),
-      );
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      throw 'No se pudo abrir $url';
     }
-  }
-
-  void _editarIglesia(Iglesia iglesia) {
-    // Implementar la lógica para editar la iglesia
-  }
-
-  void _eliminarIglesia(int id) {
-    // Implementar la lógica para eliminar la iglesia
   }
 }
 
@@ -1498,8 +1528,6 @@ class Iglesia {
     required this.horariosServicios,
   });
 
-  LatLng get coordenadas => LatLng(latitud, longitud);
-
   factory Iglesia.fromJson(Map<String, dynamic> json) {
     return Iglesia(
       id: json['id_iglesia'],
@@ -1510,8 +1538,8 @@ class Iglesia {
       longitud: json['longitud'],
       fotoPerfil: json['foto_perfil'],
       redesSociales: Map<String, String>.from(
-        json['redes_sociales']
-            .map((key, value) => MapEntry(key, value.toString())),
+        json['redes_sociales'].map((key, value) =>
+            MapEntry(key, value.toString().replaceAll('"', ''))),
       ),
       horariosServicios: Map<String, List<String>>.from(
         json['horarios_servicios']
