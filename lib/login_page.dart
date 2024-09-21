@@ -7,6 +7,7 @@ import 'package:http/http.dart'
     as http; // Importar http para la llamada a la API
 import 'register_page.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Importar shared_preferences
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +20,13 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
+  bool _rememberMe = false; // Añadir esta línea
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials(); // Cargar credenciales guardadas al iniciar
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +112,7 @@ class _LoginPageState extends State<LoginPage> {
               return null;
             },
             onSaved: (value) => _email = value!,
+            initialValue: _email, // Añadir esta línea
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -121,6 +130,18 @@ class _LoginPageState extends State<LoginPage> {
               return null;
             },
             onSaved: (value) => _password = value!,
+            initialValue: _password, // Añadir esta línea
+          ),
+          const SizedBox(height: 16),
+          CheckboxListTile(
+            title: const Text('Recordarme'),
+            value: _rememberMe,
+            onChanged: (bool? value) {
+              setState(() {
+                _rememberMe = value!;
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -187,6 +208,9 @@ class _LoginPageState extends State<LoginPage> {
         if (response.statusCode == 200) {
           if (responseData['token'] != null) {
             print('Token recibido. Iniciando sesión...');
+            if (_rememberMe) {
+              _saveCredentials(); // Guardar credenciales si "Recordarme" está marcado
+            }
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => MyHomePage(
@@ -239,5 +263,20 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', _email);
+    await prefs.setString('password', _password);
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _email = prefs.getString('email') ?? '';
+      _password = prefs.getString('password') ?? '';
+      _rememberMe = _email.isNotEmpty && _password.isNotEmpty;
+    });
   }
 }

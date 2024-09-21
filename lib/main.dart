@@ -412,11 +412,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildNewAnnouncementButton() {
-    return ElevatedButton(
-      onPressed: () {
-        _showNewAnnouncementForm();
-      },
-      child: const Text('Nuevo Anuncio'),
+    return Container(
+      margin: const EdgeInsets.only(
+          top: 20), // Ajusta el margen superior según sea necesario
+      child: ElevatedButton(
+        onPressed: () {
+          _showNewAnnouncementForm();
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 2, 56, 174),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(
+              vertical: 20, horizontal: 40), // Ajusta el tamaño del botón
+        ),
+        child: const Text('Nuevo Anuncio', style: TextStyle(fontSize: 16)),
+      ),
     );
   }
 
@@ -786,28 +796,32 @@ class AnuncioCard extends StatelessWidget {
               GestureDetector(
                 onTap: () => _descargarArchivo(
                     context, anuncio.imagen!, 'imagen_anuncio.jpg'),
-                child: Image.network(
-                  'https://asambleasdedios.gt/api.asambleasdedios.gt${anuncio.imagen}',
-                  fit: BoxFit.cover,
-                  height: 200,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.error, color: Colors.red),
-                      ),
-                    );
-                  },
+                child: IntrinsicHeight(
+                  child: Image.network(
+                    'https://asambleasdedios.gt/api.asambleasdedios.gt${anuncio.imagen}',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.error, color: Colors.red),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             if (userRole != 4 && anuncio.pdf != null)
-              ElevatedButton.icon(
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Ver PDF'),
-                onPressed: () => _descargarArchivo(
-                    context, anuncio.pdf!, 'documento_anuncio.pdf'),
+              SizedBox(
+                width: double.infinity, // Hace que el botón ocupe todo el ancho
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Descargar archivo'),
+                  onPressed: () => _descargarArchivo(
+                      context, anuncio.pdf!, 'documento_anuncio.pdf'),
+                ),
               ),
             const SizedBox(height: 8),
             Text(
@@ -1748,6 +1762,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   }
 
   Widget _buildPastorCard(Pastor pastor) {
+    bool isRestricted = widget.userRole == 3 || widget.userRole == 4;
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -1770,7 +1786,7 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 backgroundColor: Colors.white,
                 backgroundImage: pastor.fotoPerfil != null
                     ? NetworkImage(
-                        'https://asambleasdedios.gt${pastor.fotoPerfil}')
+                        'https://asambleasdedios.gt/api.asambleasdedios.gt${pastor.fotoPerfil}')
                     : const AssetImage('assets/default_profile.png')
                         as ImageProvider,
               ),
@@ -1791,15 +1807,17 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 _buildInfoRow(Icons.church, pastor.nombreIglesia),
                 _buildInfoRow(Icons.email, pastor.email),
                 _buildInfoRow(Icons.phone, pastor.telefono),
-                _buildInfoRow(Icons.work, pastor.descripcionCargo),
-                _buildInfoRow(Icons.credit_card, 'DPI: ${pastor.dpi}'),
-                _buildInfoRow(Icons.cake,
-                    'Nacimiento: ${_formatDate(pastor.fechaNacimiento)}'),
-                _buildInfoRow(Icons.badge, 'Carnet: ${pastor.carnetPastor}'),
-                _buildInfoRow(Icons.calendar_today,
-                    'Inicio cargo: ${_formatDate(pastor.fechaInicioCargo)}'),
-                _buildInfoRow(Icons.school,
-                    'Estudió en instituto bíblico: ${pastor.estudioBiblico == "1" ? 'Sí' : 'No'}'),
+                if (!isRestricted) ...[
+                  _buildInfoRow(Icons.work, pastor.descripcionCargo),
+                  _buildInfoRow(Icons.credit_card, 'DPI: ${pastor.dpi}'),
+                  _buildInfoRow(Icons.cake,
+                      'Nacimiento: ${_formatDate(pastor.fechaNacimiento)}'),
+                  _buildInfoRow(Icons.badge, 'Carnet: ${pastor.carnetPastor}'),
+                  _buildInfoRow(Icons.calendar_today,
+                      'Inicio cargo: ${_formatDate(pastor.fechaInicioCargo)}'),
+                  _buildInfoRow(Icons.school,
+                      'Estudió en instituto bíblico: ${pastor.estudioBiblico == "1" ? 'Sí' : 'No'}'),
+                ],
                 if (widget.userRole <= 1) ...[
                   const SizedBox(height: 10),
                   Row(
