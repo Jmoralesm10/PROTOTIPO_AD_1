@@ -402,6 +402,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       return AnuncioCard(
                         anuncio: _anuncios[index],
                         userRole: widget.userRole,
+                        userEmail: widget.userEmail,
                       );
                     },
                   ),
@@ -696,6 +697,7 @@ class Anuncio {
   final String nombreIglesia;
   final String? fotoPerfilPastor;
   final String? fotoPerfilIglesia;
+  final int esFavorito; // Nuevo campo
 
   Anuncio({
     required this.id,
@@ -708,6 +710,7 @@ class Anuncio {
     required this.nombreIglesia,
     this.fotoPerfilPastor,
     this.fotoPerfilIglesia,
+    required this.esFavorito, // Nuevo campo
   });
 
   factory Anuncio.fromJson(Map<String, dynamic> json) {
@@ -724,6 +727,7 @@ class Anuncio {
       nombreIglesia: json['nombre_iglesia'],
       fotoPerfilPastor: json['foto_perfil_pastor'],
       fotoPerfilIglesia: json['foto_perfil_iglesia'],
+      esFavorito: json['es_favorito'], // Nuevo campo
     );
   }
 }
@@ -731,11 +735,13 @@ class Anuncio {
 class AnuncioCard extends StatelessWidget {
   final Anuncio anuncio;
   final int userRole;
+  final String userEmail;
 
   const AnuncioCard({
     Key? key,
     required this.anuncio,
     required this.userRole,
+    required this.userEmail,
   }) : super(key: key);
 
   @override
@@ -766,6 +772,21 @@ class AnuncioCard extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    anuncio.esFavorito == 1
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: anuncio.esFavorito == 1 ? Colors.red : Colors.grey,
+                  ),
+                  onPressed: () {
+                    if (anuncio.esFavorito == 1) {
+                      _eliminarDeFavoritos(context, anuncio.email);
+                    } else {
+                      _aniadirAFavoritos(context, anuncio.email);
+                    }
+                  },
                 ),
               ],
             ),
@@ -815,7 +836,7 @@ class AnuncioCard extends StatelessWidget {
               ),
             if (userRole != 4 && anuncio.pdf != null)
               SizedBox(
-                width: double.infinity, // Hace que el botón ocupe todo el ancho
+                width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text('Descargar archivo'),
@@ -841,10 +862,85 @@ class AnuncioCard extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo abrir el archivo: $nombreArchivo')),
-      );
+      _mostrarMensaje(
+          context, 'Error', 'No se pudo abrir el archivo: $nombreArchivo');
     }
+  }
+
+  void _aniadirAFavoritos(BuildContext context, String pastorEmail) async {
+    final url = Uri.parse(
+        'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/agregar-favorito');
+    final body =
+        json.encode({'userEmail': userEmail, 'pastorEmail': pastorEmail});
+
+    print('Enviando JSON: $body'); // Imprime el JSON que se está enviando
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 201) {
+        _mostrarMensaje(context, 'Éxito',
+            responseData['mensaje'] ?? 'Añadido a favoritos con éxito');
+      } else {
+        _mostrarMensaje(context, 'Error',
+            'Error al añadir a favoritos: ${responseData['mensaje'] ?? response.reasonPhrase}');
+      }
+    } catch (e) {
+      _mostrarMensaje(context, 'Error', 'Error al añadir a favoritos: $e');
+    }
+  }
+
+  void _eliminarDeFavoritos(BuildContext context, String pastorEmail) async {
+    final url = Uri.parse(
+        'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/eliminar-favorito');
+    final body =
+        json.encode({'userEmail': userEmail, 'pastorEmail': pastorEmail});
+
+    print('Enviando JSON: $body'); // Imprime el JSON que se está enviando
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        _mostrarMensaje(context, 'Éxito',
+            responseData['mensaje'] ?? 'Eliminado de favoritos con éxito');
+      } else {
+        _mostrarMensaje(context, 'Error',
+            'Error al eliminar de favoritos: ${responseData['mensaje'] ?? response.reasonPhrase}');
+      }
+    } catch (e) {
+      _mostrarMensaje(context, 'Error', 'Error al eliminar de favoritos: $e');
+    }
+  }
+
+  void _mostrarMensaje(BuildContext context, String titulo, String mensaje) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: Text(mensaje),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Aceptar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
