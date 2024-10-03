@@ -1,0 +1,20 @@
+[33mba262da[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Cambios en logos y nombres del proyecto para su despliegue en produccion
+[33m07be593[m Agregar a favoritos funcionando correctamente
+[33m84fcf0c[m Cambios de visualizacion de anuncios y login
+[33m6f2c878[m Iconos de redes sociales funcionando correctamente
+[33m3704ddb[m Se agrego la seguridad configurando los accesos de cada rol
+[33m2bde83f[m Cambios de anuncios y URL de la API subida en el servidor
+[33m7457d4c[m Se suben anuncios correctamente
+[33m6ec933a[m Busqueda de pastor funcionando correctamente
+[33m0b93d99[m Google maps funcionando correctamente en todos los dispositivos
+[33mad9e99c[m Guarda las iglesias e imagenes correctamente en todos los dispositivos
+[33mc6c01d0[m Guarda las imagenes de perfil correctamente desde android
+[33me7cea1d[m Ya guarda los datos de la iglesia correctamente desde cualquier dispositivo
+[33m3f2f5b0[m Guarda correctamente desde la pagina web
+[33m6b846b3[m Guarda iglesia correctamente
+[33m748e2fc[m Guardar iglesia
+[33m4c56476[m cambios en formularios de pastores e iglesias, se modificaron css de las paginas de login y registro
+[33md93a6ac[m Login de la pagina
+[33m42cb10f[m Creacion de login, formulario de iglesias, nuevas publicaaciones
+[33mb162830[m Formulario para crear un nuevo pastor
+[33mfc07623[m Primer commit de la app con el modulo de busqueda de iglesia
