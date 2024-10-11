@@ -528,7 +528,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         Text('Imagen seleccionada: ${selectedImage!.name}'),
                         const SizedBox(height: 8),
-                        Image.network(selectedImage!.path, height: 100),
+                        Image.file(
+                          File(selectedImage!.path),
+                          height: 100,
+                          fit: BoxFit.contain,
+                        ),
                       ],
                     ),
                   ),
@@ -1377,8 +1381,9 @@ class _BuildMenuState extends State<BuildMenu> {
           var multipartFile = http.MultipartFile.fromBytes(
             'imagen',
             bytes,
-            filename: 'imagen_iglesia.jpg',
-            contentType: MediaType('image', 'jpeg'),
+            filename: _image!.name, // Usa el nombre original del archivo
+            contentType: MediaType(
+                'image', 'jpeg'), // Asegúrate de que el tipo MIME sea correcto
           );
           request.files.add(multipartFile);
         }
@@ -1549,9 +1554,27 @@ class _BuildMenuState extends State<BuildMenu> {
   }
 
   Widget _buildHorarioTable(Map<String, List<String>> horarios) {
+    // Define el orden de los días de la semana
+    const List<String> diasSemana = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
+
+    // Ordena los horarios según los días de la semana
+    final sortedHorarios = Map.fromEntries(
+      horarios.entries.toList()
+        ..sort((a, b) =>
+            diasSemana.indexOf(a.key).compareTo(diasSemana.indexOf(b.key))),
+    );
+
     return Table(
       border: TableBorder.all(color: Colors.blue.shade200),
-      children: horarios.entries.map((entry) {
+      children: sortedHorarios.entries.map((entry) {
         return TableRow(
           decoration: BoxDecoration(
             color: Colors.blue.shade50,
