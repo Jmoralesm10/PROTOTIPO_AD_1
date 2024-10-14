@@ -1718,6 +1718,7 @@ class BuildPastorSearchMenu extends StatefulWidget {
 
 class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   bool showAddForm = false;
+  final int _cargoId = 1; // ID fijo para el cargo "Pastor"
   final _formKey = GlobalKey<FormState>();
   final _searchController = TextEditingController();
   final _dpiController = TextEditingController();
@@ -1739,6 +1740,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
   bool? _estudioBiblico;
 
   PlatformFile? _fotoPerfil;
+  int?
+      _selectedIglesiaId; // Variable para almacenar el ID de la iglesia seleccionada
 
   @override
   Widget build(BuildContext context) {
@@ -2135,11 +2138,19 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                     labelText: 'Número de Carnet de Pastor'),
                 validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
               ),
-              TextFormField(
-                controller: _iglesiaController,
-                decoration:
-                    const InputDecoration(labelText: 'Iglesia que Pastorea'),
-                validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+              GestureDetector(
+                onTap: _showIglesiaSearchDialog,
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    controller: _iglesiaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Iglesia que Pastorea',
+                      suffixIcon: Icon(Icons.search),
+                    ),
+                    validator: (value) =>
+                        value!.isEmpty ? 'Campo requerido' : null,
+                  ),
+                ),
               ),
               TextFormField(
                 controller: _emailController,
@@ -2154,8 +2165,9 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
                 validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
               ),
               TextFormField(
-                controller: _cargoController,
+                initialValue: 'Pastor',
                 decoration: const InputDecoration(labelText: 'Cargo Ocupado'),
+                readOnly: true,
                 validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
               ),
               TextFormField(
@@ -2241,6 +2253,22 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
     }
   }
 
+  void _showIglesiaSearchDialog() async {
+    final selectedIglesia = await showDialog<Iglesia>(
+      context: context,
+      builder: (context) {
+        return IglesiaSearchDialog();
+      },
+    );
+
+    if (selectedIglesia != null) {
+      setState(() {
+        _iglesiaController.text = selectedIglesia.nombre;
+        _selectedIglesiaId = selectedIglesia.id;
+      });
+    }
+  }
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       String apiUrl =
@@ -2261,8 +2289,8 @@ class _BuildPastorSearchMenuState extends State<BuildPastorSearchMenu> {
         request.fields['telefono'] = _telefonoController.text;
         request.fields['fecha_inicio_cargo'] = _fechaInicioCargo.text;
         request.fields['estudio_biblico'] = _estudioBiblico.toString();
-        request.fields['iglesia_id'] = _iglesiaController.text;
-        request.fields['cargo_id'] = _cargoController.text;
+        request.fields['iglesia_id'] = _selectedIglesiaId.toString();
+        request.fields['cargo_id'] = _cargoId.toString(); // Enviar ID fijo
 
         // Agregar la foto de perfil si existe
         if (_fotoPerfil != null) {
@@ -2390,5 +2418,95 @@ class Pastor {
       descripcionCargo: json['descripcion_cargo'],
       fotoPerfil: json['fotoPerfil'],
     );
+  }
+}
+
+// Diálogo para buscar y seleccionar una iglesia
+class IglesiaSearchDialog extends StatefulWidget {
+  @override
+  _IglesiaSearchDialogState createState() => _IglesiaSearchDialogState();
+}
+
+class _IglesiaSearchDialogState extends State<IglesiaSearchDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Iglesia> _iglesias = [];
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Buscar Iglesia'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Ingrese el nombre de la iglesia',
+                suffixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => _buscarIglesias(),
+            ),
+            const SizedBox(height: 10),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _iglesias.length,
+                  itemBuilder: (context, index) {
+                    final iglesia = _iglesias[index];
+                    return ListTile(
+                      title: Text(iglesia.nombre),
+                      subtitle: Text(iglesia.direccion),
+                      onTap: () => Navigator.of(context).pop(iglesia),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+      ],
+    );
+  }
+
+  void _buscarIglesias() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://asambleasdedios.gt/api.asambleasdedios.gt/api/asambleas/buscar-iglesias?nombre=${_searchController.text}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> iglesiasData = json.decode(response.body);
+        setState(() {
+          _iglesias =
+              iglesiasData.map((item) => Iglesia.fromJson(item)).toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load iglesias');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar iglesias: $e')),
+      );
+    }
   }
 }
