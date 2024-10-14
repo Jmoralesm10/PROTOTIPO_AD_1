@@ -99,7 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color.fromARGB(255, 2, 56, 174),
+              color: Colors.white,
             ),
             textAlign: TextAlign.center,
           ),

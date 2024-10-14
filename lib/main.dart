@@ -171,36 +171,49 @@ class _MyHomePageState extends State<MyHomePage> {
 
   PreferredSizeWidget _buildMobileAppBar() {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(110),
+      preferredSize: const Size.fromHeight(130),
       child: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(255, 2, 56, 174),
         flexibleSpace: SafeArea(
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  iconSize: 70,
-                  padding: const EdgeInsets.all(10.0),
-                  icon: const Icon(Icons.menu, color: Colors.white),
-                  onPressed: () {
-                    _scaffoldKey.currentState?.openDrawer();
-                  },
-                ),
-                Expanded(
-                  child: Container(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Image.asset(
-                    'assets/logo.png',
-                    height: 80,
-                    fit: BoxFit.contain,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    iconSize: 70,
+                    padding: const EdgeInsets.all(10.0),
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    onPressed: () {
+                      _scaffoldKey.currentState?.openDrawer();
+                    },
                   ),
-                ),
-              ],
-            ),
+                  Flexible(
+                    child: Text(
+                      'Directorio de Iglesias Sección El Progreso',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2, // Limita el texto a dos líneas
+                      overflow: TextOverflow
+                          .ellipsis, // Añade puntos suspensivos si es necesario
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      height: 80,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -236,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            'Asambleas de Dios',
+            'Directorio de Iglesias Sección El Progreso',
             style: TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -391,6 +404,13 @@ class _MyHomePageState extends State<MyHomePage> {
     return Column(
       children: [
         if (widget.userRole <= 3) _buildNewAnnouncementButton(),
+        const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            'Anuncios Destacados',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -438,120 +458,124 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
-        return SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nueva publicación',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: textController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Escribe la descripción del anuncio...',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.all(12),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nueva publicación',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.image, color: Colors.blue),
-                    label: const Text('Agregar imagen',
-                        style: TextStyle(color: Colors.blue)),
-                    onPressed: () async {
-                      final result = await image_picker.getWebImage();
-                      if (result != null) {
-                        setState(() {
-                          selectedImage = result;
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.blue),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.attach_file, color: Colors.blue),
-                    label: const Text('Agregar archivo',
-                        style: TextStyle(color: Colors.blue)),
-                    onPressed: () async {
-                      final result = await file_picker.pickFile();
-                      if (result != null) {
-                        setState(() {
-                          selectedFile = result;
-                        });
-                        print('Archivo seleccionado: ${result.name}');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.blue),
-                    ),
-                  ),
-                ],
-              ),
-              if (selectedImage != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Imagen seleccionada: ${selectedImage!.name}'),
-                      const SizedBox(height: 8),
-                      kIsWeb
-                          ? Image.network(selectedImage!.path, height: 100)
-                          : Image.file(File(selectedImage!.path), height: 100),
-                    ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Escribe la descripción del anuncio...',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.all(12),
                   ),
                 ),
-              if (selectedFile != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Archivo seleccionado: ${selectedFile!.name}'),
-                ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _publicarAnuncio(
-                        textController.text,
-                        selectedImage,
-                        selectedFile,
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Publicar anuncio'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.image, color: Colors.blue),
+                      label: const Text('Agregar imagen',
+                          style: TextStyle(color: Colors.blue)),
+                      onPressed: () async {
+                        final result = await image_picker.getWebImage();
+                        if (result != null) {
+                          setState(() {
+                            selectedImage = result;
+                          });
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.blue),
                       ),
-                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.attach_file, color: Colors.blue),
+                      label: const Text('Agregar archivo',
+                          style: TextStyle(color: Colors.blue)),
+                      onPressed: () async {
+                        final result = await file_picker.pickFile();
+                        if (result != null) {
+                          setState(() {
+                            selectedFile = result;
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedImage != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Imagen seleccionada: ${selectedImage!.name}'),
+                        const SizedBox(height: 8),
+                        Image.file(
+                          File(selectedImage!.path),
+                          height: 100,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                if (selectedFile != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Archivo seleccionado: ${selectedFile!.name}'),
+                  ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _publicarAnuncio(
+                          textController.text,
+                          selectedImage,
+                          selectedFile,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Publicar anuncio'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1357,8 +1381,9 @@ class _BuildMenuState extends State<BuildMenu> {
           var multipartFile = http.MultipartFile.fromBytes(
             'imagen',
             bytes,
-            filename: 'imagen_iglesia.jpg',
-            contentType: MediaType('image', 'jpeg'),
+            filename: _image!.name, // Usa el nombre original del archivo
+            contentType: MediaType(
+                'image', 'jpeg'), // Asegúrate de que el tipo MIME sea correcto
           );
           request.files.add(multipartFile);
         }
@@ -1529,9 +1554,27 @@ class _BuildMenuState extends State<BuildMenu> {
   }
 
   Widget _buildHorarioTable(Map<String, List<String>> horarios) {
+    // Define el orden de los días de la semana
+    const List<String> diasSemana = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
+
+    // Ordena los horarios según los días de la semana
+    final sortedHorarios = Map.fromEntries(
+      horarios.entries.toList()
+        ..sort((a, b) =>
+            diasSemana.indexOf(a.key).compareTo(diasSemana.indexOf(b.key))),
+    );
+
     return Table(
       border: TableBorder.all(color: Colors.blue.shade200),
-      children: horarios.entries.map((entry) {
+      children: sortedHorarios.entries.map((entry) {
         return TableRow(
           decoration: BoxDecoration(
             color: Colors.blue.shade50,
