@@ -14,7 +14,7 @@
     </queries>
 
     <application
-        android:label="prototipo_asambleas_1"
+        android:label="Asambleas de Dios"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
