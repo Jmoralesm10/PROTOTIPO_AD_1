@@ -302,16 +302,14 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
         ),
-        if (widget.userRole <= 1)
-          ListTile(
-            leading:
-                const Icon(Icons.admin_panel_settings, color: Colors.white),
-            title: const Text('Panel de Administración',
-                style: TextStyle(color: Colors.white)),
-            onTap: () {
-              // Implementar navegación al panel de administración
-            },
-          ),
+        ListTile(
+          leading: const Icon(Icons.download, color: Colors.white),
+          title: const Text('Descargar aplicación para android',
+              style: TextStyle(color: Colors.white)),
+          onTap: () {
+            _descargarAPK();
+          },
+        ),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.white),
           title: const Text('Cerrar sesión',
@@ -391,6 +389,18 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ],
     );
+  }
+
+  void _descargarAPK() async {
+    final Uri uri = Uri.parse(
+        'https://asambleasdedios.gt/api.desarrollo.asambleasdedios.gt/descargar-apk');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        _mostrarMensaje('Error', 'No se pudo iniciar la descarga del APK.');
+      }
+    }
   }
 
   void _cerrarSesion() {
