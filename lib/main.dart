@@ -380,6 +380,14 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
+          leading: const Icon(Icons.download, color: Colors.white),
+          title: const Text('Descargar aplicación para android',
+              style: TextStyle(color: Colors.white)),
+          onTap: () {
+            _descargarAPK();
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.exit_to_app),
           title: const Text('Cerrar sesión'),
           onTap: () {
