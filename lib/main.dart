@@ -393,7 +393,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _descargarAPK() async {
     final Uri uri = Uri.parse(
-        'https://asambleasdedios.gt/api.desarrollo.asambleasdedios.gt/descargar-apk');
+        'https://asambleasdedios.gt/api.asambleasdedios.gt/descargar-apk');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
